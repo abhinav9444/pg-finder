@@ -773,10 +773,11 @@ let stagingImgs = {}; // pgId -> {amenity,food,infra}
 let pendingDeleteId = null;
 
 // ── Login ──────────────────────────────────────────────────────
-function doLogin() {
+async function doLogin() {
   const u = document.getElementById('l-user').value.trim();
   const p = document.getElementById('l-pass').value;
-  const s = loginUser(u, p);
+  document.getElementById('login-err').style.display='none';
+  const s = await loginUser(u, p);
   if (!s) { document.getElementById('login-err').style.display='block'; return; }
   sess = s;
   document.getElementById('login-screen').style.display = 'none';
@@ -1483,9 +1484,18 @@ function dl(name, mime, content) {
 }
 
 // ── Auto-check session ────────────────────────────────────────
-(function() {
+(async function() {
   const s = getSession();
   if (s) {
+    // Re-validate session user still exists in cloud
+    const cloudUsers = await loadUsersFromCloud();
+    const users = cloudUsers || getUsers();
+    const user = users.find(u => u.id === s.userId && u.active);
+    if (!user) { sessionStorage.removeItem('pgf_sess'); return; }
+    // Update session with latest isAdmin in case it changed
+    s.username = user.username;
+    s.isAdmin  = user.isAdmin;
+    sessionStorage.setItem('pgf_sess', JSON.stringify(s));
     sess = s;
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('main-app').style.display = 'block';
