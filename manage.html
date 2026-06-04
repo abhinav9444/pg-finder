@@ -234,6 +234,11 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:14px;color:var(--gray-7)
     </div>
     <button class="btn btn-green" style="width:100%;justify-content:center" onclick="doLogin()">Sign In →</button>
     <div style="margin-top:16px;text-align:center"><a href="view.html" style="font-size:12px;color:var(--gray-6)">← Back to Browse</a></div>
+    <div style="margin-top:20px;background:var(--gray-1);border-radius:10px;padding:12px;font-size:11px;color:var(--gray-6)">
+      <strong>Demo credentials</strong><br>
+      Admin: <code>admin</code> / <code>Admin@123</code><br>
+      User: <code>ravi</code> / <code>Ravi@123</code>
+    </div>
   </div>
 </div>
 
@@ -296,6 +301,9 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:14px;color:var(--gray-7)
         <div class="fg"><label>Contact name</label><input id="fo" placeholder="Full name"></div>
         <div class="fg"><label>Phone number</label><input id="fp" placeholder="+91 XXXXX XXXXX" type="tel"></div>
         <div class="fg"><label>Email</label><input id="fe" placeholder="owner@email.com" type="email"></div>
+      </div>
+      <div class="frow one">
+        <div class="fg"><label>PG Website (optional)</label><input id="fweb" placeholder="https://www.srisaipg.com"></div>
       </div>
     </div>
 
@@ -426,11 +434,13 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:14px;color:var(--gray-7)
     <div style="max-width:560px">
       <div class="fsec">
         <div class="fsec-title">🗄 JSONBin (shared cloud database)</div>
-        <div style="font-size:12px;color:var(--gray-6);margin-bottom:14px;line-height:1.6">
-          Sign up free at <a href="https://jsonbin.io" target="_blank" style="color:var(--b)">jsonbin.io</a> → copy your Master Key → paste below. All users sharing the same key see the same data.
+        <div style="font-size:12px;color:var(--gray-6);margin-bottom:14px;line-height:1.8;background:var(--gray-1);padding:12px;border-radius:8px">
+          <strong>Step 1:</strong> Sign up at <a href="https://jsonbin.io" target="_blank" style="color:var(--b)">jsonbin.io</a> → <strong>API Keys</strong> → copy Master Key<br>
+          <strong>Step 2:</strong> Go to <a href="https://jsonbin.io/app/bins" target="_blank" style="color:var(--b)">jsonbin.io/app/bins</a> → <strong>Create Bin</strong> → paste <code style="background:#e5e5e5;padding:1px 5px;border-radius:3px">{"pgs":[]}</code> → Save → copy the <strong>Bin ID</strong><br>
+          <strong>Step 3:</strong> Paste both below → Test & Save
         </div>
         <div class="fg" style="margin-bottom:10px"><label>Master Key (starts with $2b$...)</label><input id="cfg-jbin" type="password" placeholder="$2b$10$..."></div>
-        <div class="fg" style="margin-bottom:14px"><label>Bin ID <span style="font-weight:400;color:var(--gray-4)">(auto-created on first save)</span></label><input id="cfg-bid" placeholder="auto-filled"></div>
+        <div class="fg" style="margin-bottom:14px"><label>Bin ID <span style="font-weight:400;color:var(--gray-4)">(from jsonbin.io/app/bins)</span></label><input id="cfg-bid" placeholder="e.g. 64abc123def456..."></div>
         <button class="btn btn-green" onclick="testJSONBin()">🔗 Test & Save</button>
         <span id="jbin-status" style="font-size:12px;color:var(--gray-6);margin-left:10px"></span>
       </div>
@@ -816,7 +826,7 @@ function clearForm() {
   editId = null; revCount = 0;
   document.getElementById('eid').value = '';
   document.getElementById('form-title').textContent = 'Add new PG';
-  ['fn','fa','fm','fo','fp','fe','fr1','fr2','fr3','fd','fma','ffa','ffq','fcl'].forEach(id => {
+  ['fn','fa','fm','fo','fp','fe','fweb','fr1','fr2','fr3','fd','fma','ffa','ffq','fcl'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
   ['fg2','fel','ffd','fw'].forEach(id => { const el = document.getElementById(id); if (el) el.selectedIndex = 0; });
@@ -837,6 +847,7 @@ function editPG(id) {
   document.getElementById('form-title').textContent = 'Editing: ' + pg.name;
   const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v||''; };
   set('fn', pg.name); set('fa', pg.addr); set('fm', pg.mapLink);
+  set('fweb', pg.website||'');
   set('fo', pg.owner); set('fp', pg.phone); set('fe', pg.email);
   set('fr1', pg.r1||''); set('fr2', pg.r2||''); set('fr3', pg.r3||'');
   set('fd', pg.deposit||''); set('fma', pg.maint||''); set('ffa', pg.foodAmt||'');
@@ -943,6 +954,7 @@ async function savePG() {
     owner:    document.getElementById('fo').value.trim(),
     phone:    document.getElementById('fp').value.trim(),
     email:    document.getElementById('fe').value.trim(),
+    website:  document.getElementById('fweb').value.trim(),
     r1:       +document.getElementById('fr1').value || 0,
     r2:       +document.getElementById('fr2').value || 0,
     r3:       +document.getElementById('fr3').value || 0,

@@ -743,7 +743,10 @@ function cardHTML(pg, distKm) {
         ${pg.r3?`<span class="rent-pill">Triple ₹${fmt(pg.r3)}</span>`:''}
       </div>
       <div class="pg-card-foot">
-        <div class="pg-card-contact">${pg.phone||pg.email||'No contact'}</div>
+        <div class="pg-card-contact">
+          ${pg.phone||pg.email||'No contact'}
+          ${pg.website?`<a href="${pg.website}" target="_blank" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:3px;margin-left:6px;color:var(--gm);font-size:11px;text-decoration:none;border:1px solid rgba(29,158,117,.3);padding:1px 7px;border-radius:20px;background:var(--gl)">🌐 Website</a>`:''}
+        </div>
       </div>
     </div>
   </div>`;
@@ -782,6 +785,8 @@ function showDetail(id) {
           ${pg.owner?`<div class="di"><div class="dl">Owner / Manager</div><div class="dv">${pg.owner}</div></div>`:''}
           ${pg.phone?`<div class="di"><div class="dl">Phone</div><div class="dv"><a href="tel:${pg.phone}" style="color:var(--g)">${pg.phone}</a></div></div>`:''}
           ${pg.email?`<div class="di"><div class="dl">Email</div><div class="dv"><a href="mailto:${pg.email}" style="color:var(--b)">${pg.email}</a></div></div>`:''}
+          ${pg.website?`<div class="di"><div class="dl">Website</div><div class="dv"><a href="${pg.website}" target="_blank" style="color:var(--gm);word-break:break-all">${pg.website.replace(/^https?:\/\//,'')}</a></div></div>`:''}
+
         </div>
       </div>
       <div class="dsec">
