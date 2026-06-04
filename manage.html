@@ -234,7 +234,11 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:14px;color:var(--gray-7)
     </div>
     <button class="btn btn-green" style="width:100%;justify-content:center" onclick="doLogin()">Sign In →</button>
     <div style="margin-top:16px;text-align:center"><a href="view.html" style="font-size:12px;color:var(--gray-6)">← Back to Browse</a></div>
-
+    <div style="margin-top:20px;background:var(--gray-1);border-radius:10px;padding:12px;font-size:11px;color:var(--gray-6)">
+      <strong>Demo credentials</strong><br>
+      Admin: <code>admin</code> / <code>Admin@123</code><br>
+      User: <code>ravi</code> / <code>Ravi@123</code>
+    </div>
   </div>
 </div>
 
@@ -533,8 +537,19 @@ function seedUsers() {
 }
 
 // ── Config (JSONBin + Cloudinary) ────────────────────────────
-function getCfg()       { try{return JSON.parse(localStorage.getItem(CFG_KEY)||'{}')}catch(e){return{}} }
-function saveCfg(c)     { localStorage.setItem(CFG_KEY, JSON.stringify(c)) }
+const DEFAULT_CFG = {
+  jbinKey: '$2a$10$8VWjD9BKIpb0Vw467iv/a.SatIaeIBM2EHyZlQlv7PZ97nOTF09O',
+  binId:   '6a2104f1da38895dfe848537',
+  cldName: 'dfip7floe',
+  preset:  'ttutjao0'
+};
+function getCfg() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(CFG_KEY)||'{}');
+    return Object.assign({}, DEFAULT_CFG, stored);
+  } catch(e) { return DEFAULT_CFG; }
+}
+function saveCfg(c) { localStorage.setItem(CFG_KEY, JSON.stringify(Object.assign({}, DEFAULT_CFG, c))); }
 
 // ── User management ──────────────────────────────────────────
 function getUsers()     { try{return JSON.parse(localStorage.getItem(USERS_KEY)||'[]')}catch(e){return[]} }
@@ -558,24 +573,15 @@ function saveDB(data)   { localStorage.setItem(DB_KEY, JSON.stringify(data)); sy
 // ── JSONBin sync ─────────────────────────────────────────────
 async function syncToCloud(data) {
   const cfg = getCfg();
-  if (!cfg.jbinKey) return;
+  if (!cfg.jbinKey || !cfg.binId) return;
   try {
-    if (!cfg.binId) {
-      const r = await fetch('https://api.jsonbin.io/v3/b', {
-        method:'POST',
-        headers:{'Content-Type':'application/json','X-Master-Key':cfg.jbinKey,'X-Bin-Name':'PG Finder BLR'},
-        body:JSON.stringify({pgs:data})
-      });
-      const d = await r.json();
-      cfg.binId = d.metadata.id;
-      saveCfg(cfg);
-    } else {
-      await fetch(`https://api.jsonbin.io/v3/b/${cfg.binId}`, {
-        method:'PUT',
-        headers:{'Content-Type':'application/json','X-Master-Key':cfg.jbinKey},
-        body:JSON.stringify({pgs:data})
-      });
-    }
+    const r = await fetch(`https://api.jsonbin.io/v3/b/${cfg.binId}`, {
+      method:'PUT',
+      headers:{'Content-Type':'application/json','X-Master-Key':cfg.jbinKey,'X-Bin-Private':'false'},
+      body:JSON.stringify({pgs:data})
+    });
+    const d = await r.json();
+    if (d.message) console.warn('JSONBin write:', d.message);
   } catch(e) { console.warn('Cloud sync failed', e); }
 }
 
@@ -585,8 +591,9 @@ async function loadFromCloud() {
   try {
     const r = await fetch(`https://api.jsonbin.io/v3/b/${cfg.binId}/latest`,
       {headers:{'X-Master-Key':cfg.jbinKey}});
+    if (!r.ok) return null;
     const d = await r.json();
-    const pgs = d.record.pgs || [];
+    const pgs = d.record?.pgs || [];
     localStorage.setItem(DB_KEY, JSON.stringify(pgs));
     return pgs;
   } catch(e) { return null; }
