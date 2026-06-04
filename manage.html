@@ -534,10 +534,11 @@ function seedUsers() {
 
 // ── Config (JSONBin + Cloudinary) ────────────────────────────
 const DEFAULT_CFG = {
-  jbinKey: '$2a$10$8VWjD9BKIpb0Vw467iv/a.SatIaeIBM2EHyZlQlv7PZ97nOTF09O',
-  binId:   '6a2104f1da38895dfe848537',
-  cldName: 'dfip7floe',
-  preset:  'ttutjao0'
+  jbinKey:    '$2a$10$8VWjD9BKIpb0Vw467iv/a.SatIaeIBM2EHyZlQlv7PZ97nOTF09O',
+  binId:      '6a2104f1da38895dfe848537',
+  usersBinId: '6a2207b1da38895dfe895812',
+  cldName:    'dfip7floe',
+  preset:     'ttutjao0'
 };
 function getCfg() {
   try {
@@ -547,15 +548,55 @@ function getCfg() {
 }
 function saveCfg(c) { localStorage.setItem(CFG_KEY, JSON.stringify(Object.assign({}, DEFAULT_CFG, c))); }
 
-// ── User management ──────────────────────────────────────────
-function getUsers()     { try{return JSON.parse(localStorage.getItem(USERS_KEY)||'[]')}catch(e){return[]} }
-function saveUsers(u)   { localStorage.setItem(USERS_KEY, JSON.stringify(u)) }
+// ── User management (cloud-synced) ───────────────────────────
+const DEFAULT_USERS = [
+  { id:'admin1', username:'admin', password:btoa('Admin@123'), isAdmin:true,  active:true, created:'2025-01-01' },
+  { id:'u1',     username:'ravi',  password:btoa('Ravi@123'),  isAdmin:false, active:true, created:'2025-01-01' },
+  { id:'u2',     username:'meena', password:btoa('Meena@123'), isAdmin:false, active:true, created:'2025-01-01' },
+];
 
-function loginUser(username, password) {
-  const users = getUsers();
-  const user  = users.find(u => u.username === username && u.password === btoa(password) && u.active);
+function getUsers() {
+  try { return JSON.parse(localStorage.getItem(USERS_KEY)||'null') || DEFAULT_USERS; }
+  catch(e) { return DEFAULT_USERS; }
+}
+function saveUsers(u) {
+  localStorage.setItem(USERS_KEY, JSON.stringify(u));
+  syncUsers(u);
+}
+
+async function syncUsers(users) {
+  const cfg = getCfg();
+  if (!cfg.jbinKey || !cfg.usersBinId) return;
+  try {
+    await fetch(`https://api.jsonbin.io/v3/b/${cfg.usersBinId}`, {
+      method:'PUT',
+      headers:{'Content-Type':'application/json','X-Master-Key':cfg.jbinKey},
+      body:JSON.stringify({users})
+    });
+  } catch(e) {}
+}
+
+async function loadUsersFromCloud() {
+  const cfg = getCfg();
+  if (!cfg.jbinKey || !cfg.usersBinId) return null;
+  try {
+    const r = await fetch(`https://api.jsonbin.io/v3/b/${cfg.usersBinId}/latest`,
+      {headers:{'X-Master-Key':cfg.jbinKey}});
+    if (!r.ok) return null;
+    const d = await r.json();
+    const users = d.record?.users || null;
+    if (users) localStorage.setItem(USERS_KEY, JSON.stringify(users));
+    return users;
+  } catch(e) { return null; }
+}
+
+async function loginUser(username, password) {
+  // Always fetch latest users from cloud first
+  const cloudUsers = await loadUsersFromCloud();
+  const users = cloudUsers || getUsers();
+  const user = users.find(u => u.username === username && u.password === btoa(password) && u.active);
   if (!user) return null;
-  const sess  = { userId:user.id, username:user.username, isAdmin:user.isAdmin, ts:Date.now() };
+  const sess = { userId:user.id, username:user.username, isAdmin:user.isAdmin, ts:Date.now() };
   sessionStorage.setItem(SESS_KEY, JSON.stringify(sess));
   return sess;
 }
