@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Manage PGs — Bengaluru</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ═══ LOGIN SCREEN ═══ -->
+<div id="login-screen" class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div style="width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,var(--gm),var(--g));display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 12px">🏠</div>
+    </div>
+    <div class="auth-title">Welcome back</div>
+    <div class="auth-sub">Sign in to manage PG listings</div>
+    <div class="auth-error" id="login-err">Incorrect username or password</div>
+    <div class="fg" style="margin-bottom:12px">
+      <label>Username</label>
+      <input id="l-user" placeholder="Enter username" autocomplete="username">
+    </div>
+    <div class="fg" style="margin-bottom:20px">
+      <label>Password</label>
+      <input id="l-pass" type="password" placeholder="Enter password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn btn-green" style="width:100%;justify-content:center" onclick="doLogin()">Sign In →</button>
+    <div style="margin-top:16px;text-align:center"><a href="view.html" style="font-size:12px;color:var(--gray-6)">← Back to Browse</a></div>
+  </div>
+</div>
+
+<!-- ═══ MAIN APP (shown after login) ═══ -->
+<div id="main-app" style="display:none">
+
+<div class="topbar">
+  <a href="index.html" class="brand"><div class="brand-dot"></div>PG Finder BLR</a>
+  <div class="topbar-right">
+    <div class="sync-pill"><div class="sdot" id="sdot"></div><span id="slbl">Local</span></div>
+    <div class="user-chip" id="user-chip">👤 —</div>
+    <button class="btn btn-sm btn-red" onclick="logout()">Sign Out</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" id="tab-pgs"   onclick="switchTab('pgs')">🏠 PG Listings</button>
+    <button class="tab"        id="tab-add"   onclick="switchTab('add')">➕ Add / Edit PG</button>
+    <button class="tab"        id="tab-export"onclick="switchTab('export')">📥 Export</button>
+    <button class="tab"        id="tab-admin" onclick="switchTab('admin')" style="display:none">⚙️ Admin</button>
+    <button class="tab"        id="tab-cfg"   onclick="switchTab('cfg')">🔧 Settings</button>
+  </div>
+
+  <!-- ─── PG LISTINGS ─── -->
+  <div id="pane-pgs">
+    <div class="sbar">
+      <input id="q" placeholder="🔍 Search PG name or area..." oninput="renderPGList()">
+      <select id="gf" onchange="renderPGList()"><option value="">All gender</option><option>Male</option><option>Female</option><option>Co-ed</option></select>
+      <select id="sf" onchange="renderPGList()"><option value="name">Sort: Name</option><option value="rent">Rent ↑</option><option value="score">Score ↓</option></select>
+    </div>
+    <div id="pg-list-grid" class="pg-grid"></div>
+  </div>
+
+  <!-- ─── ADD / EDIT FORM ─── -->
+  <div id="pane-add" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+      <div style="font-size:17px;font-weight:700" id="form-title">Add new PG</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-sm" onclick="clearForm()">✕ Clear</button>
+        <button class="btn btn-green" id="save-btn" onclick="savePG()">💾 Save PG</button>
+      </div>
+    </div>
+    <input type="hidden" id="eid">
+
+    <div class="fsec">
+      <div class="fsec-title">🏢 Basic information</div>
+      <div class="frow">
+        <div class="fg"><label>PG name *</label><input id="fn" placeholder="e.g. Sri Sai PG Koramangala"></div>
+        <div class="fg"><label>Gender</label><select id="fg2"><option>Male</option><option>Female</option><option>Co-ed</option></select></div>
+      </div>
+      <div class="frow one"><div class="fg"><label>Full address *</label><input id="fa" placeholder="House no., Street, Area, Bengaluru — PIN code"></div></div>
+      <div class="frow one"><div class="fg"><label>Google Maps link</label><input id="fm" placeholder="https://maps.google.com/?q=..."></div></div>
+    </div>
+
+    <div class="fsec">
+      <div class="fsec-title">👤 Owner / Manager contact</div>
+      <div class="frow three">
+        <div class="fg"><label>Contact name</label><input id="fo" placeholder="Full name"></div>
+        <div class="fg"><label>Phone number</label><input id="fp" placeholder="+91 XXXXX XXXXX" type="tel"></div>
+        <div class="fg"><label>Email</label><input id="fe" placeholder="owner@email.com" type="email"></div>
+      </div>
+    </div>
+
+    <div class="fsec">
+      <div class="fsec-title">💰 Rent & charges</div>
+      <div class="frow three">
+        <div class="fg"><label>Single bed ₹/month</label><input id="fr1" type="number" placeholder="e.g. 9000"></div>
+        <div class="fg"><label>Double sharing ₹/month</label><input id="fr2" type="number" placeholder="e.g. 6500"></div>
+        <div class="fg"><label>Triple sharing ₹/month</label><input id="fr3" type="number" placeholder="e.g. 5000"></div>
+      </div>
+      <div class="frow three">
+        <div class="fg"><label>Security deposit ₹</label><input id="fd" type="number" placeholder="e.g. 15000"></div>
+        <div class="fg"><label>Maintenance ₹/month</label><input id="fma" type="number" placeholder="0 if none"></div>
+        <div class="fg"><label>Electricity</label>
+          <select id="fel"><option value="">Select...</option><option>Included in rent</option><option>Per unit metered</option><option>Fixed monthly</option></select></div>
+      </div>
+      <div class="frow three">
+        <div class="fg"><label>Food</label>
+          <select id="ffd"><option value="">Select...</option><option>Included in rent</option><option>Separate — veg only</option><option>Separate — veg &amp; non-veg</option><option>Not provided</option></select></div>
+        <div class="fg"><label>Food charge ₹/month</label><input id="ffa" type="number" placeholder="0 if included"></div>
+        <div class="fg"><label>WiFi</label>
+          <select id="fw"><option value="">Select...</option><option>Included in rent</option><option>Separate charge</option><option>Not available</option></select></div>
+      </div>
+    </div>
+
+    <div class="fsec">
+      <div class="fsec-title">✅ Amenities</div>
+      <div class="amen-grid" id="amen-grid">
+        <label class="ach" id="ach-laundry"><input type="checkbox" id="a-laundry" onchange="updateAch(this,'ach-laundry')"> 👕 Laundry</label>
+        <label class="ach" id="ach-hk">     <input type="checkbox" id="a-hk"      onchange="updateAch(this,'ach-hk')">      🧹 Housekeeping</label>
+        <label class="ach" id="ach-lift">   <input type="checkbox" id="a-lift"    onchange="updateAch(this,'ach-lift')">    🛗 Lift</label>
+        <label class="ach" id="ach-parking"><input type="checkbox" id="a-parking" onchange="updateAch(this,'ach-parking')"> 🚗 Parking</label>
+        <label class="ach" id="ach-water">  <input type="checkbox" id="a-water"   onchange="updateAch(this,'ach-water')">   💧 Drinking Water</label>
+        <label class="ach" id="ach-cctv">   <input type="checkbox" id="a-cctv"    onchange="updateAch(this,'ach-cctv')">    📹 CCTV</label>
+        <label class="ach" id="ach-ac">     <input type="checkbox" id="a-ac"      onchange="updateAch(this,'ach-ac')">      ❄️ AC Rooms</label>
+        <label class="ach" id="ach-gym">    <input type="checkbox" id="a-gym"     onchange="updateAch(this,'ach-gym')">     🏋️ Gym</label>
+        <label class="ach" id="ach-power">  <input type="checkbox" id="a-power"   onchange="updateAch(this,'ach-power')">   🔌 Power Backup</label>
+      </div>
+    </div>
+
+    <div class="fsec">
+      <div class="fsec-title">⭐ Resident reviews <span style="font-size:11px;font-weight:400;color:var(--gray-6)">(score each out of 10)</span></div>
+      <div id="rev-list"></div>
+      <button class="btn btn-sm" style="margin-top:8px" onclick="addRev()">➕ Add review</button>
+    </div>
+
+    <div class="fsec">
+      <div class="fsec-title">📝 Quality notes</div>
+      <div class="frow">
+        <div class="fg"><label>Food quality notes</label><textarea id="ffq" placeholder="Variety, taste, hygiene, timings..."></textarea></div>
+        <div class="fg"><label>Cleanliness notes</label><textarea id="fcl" placeholder="Rooms, bathrooms, common areas..."></textarea></div>
+      </div>
+    </div>
+
+    <div class="fsec">
+      <div class="fsec-title">📸 Photos <span style="font-size:11px;font-weight:400;color:var(--gray-6)">— uploaded to cloud (configure Cloudinary in Settings)</span></div>
+      <div class="frow three">
+        <div class="fg">
+          <label>Amenity photos</label>
+          <div class="upzone" onclick="document.getElementById('u-amen').click()">☁️ Click to upload</div>
+          <input type="file" id="u-amen" multiple accept="image/*" style="display:none" onchange="handleUpload(this,'amenity')">
+          <div class="progress-bar" id="pb-amenity"><div class="progress-fill" id="pf-amenity"></div></div>
+          <div class="prevrow" id="prev-amenity"></div>
+        </div>
+        <div class="fg">
+          <label>Food photos</label>
+          <div class="upzone" onclick="document.getElementById('u-food').click()">☁️ Click to upload</div>
+          <input type="file" id="u-food" multiple accept="image/*" style="display:none" onchange="handleUpload(this,'food')">
+          <div class="progress-bar" id="pb-food"><div class="progress-fill" id="pf-food"></div></div>
+          <div class="prevrow" id="prev-food"></div>
+        </div>
+        <div class="fg">
+          <label>Infrastructure / cleanliness</label>
+          <div class="upzone" onclick="document.getElementById('u-infra').click()">☁️ Click to upload</div>
+          <input type="file" id="u-infra" multiple accept="image/*" style="display:none" onchange="handleUpload(this,'infra')">
+          <div class="progress-bar" id="pb-infra"><div class="progress-fill" id="pf-infra"></div></div>
+          <div class="prevrow" id="prev-infra"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── EXPORT ─── -->
+  <div id="pane-export" style="display:none">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div style="background:var(--white);border:1px solid var(--gray-3);border-radius:var(--radius-xl);padding:20px;box-shadow:var(--shadow)">
+        <div style="font-size:14px;font-weight:600;margin-bottom:8px">📊 Export as Excel (.xlsx)</div>
+        <div style="font-size:12px;color:var(--gray-6);margin-bottom:14px;line-height:1.6">Fully formatted Excel file matching the original template — 4 sheets: Database, Dashboard, Entry Guide, Compare PGs. Colour-coded, with dropdowns and conditional formatting.</div>
+        <button class="btn btn-green" onclick="exportXLSX()">⬇️ Download Excel</button>
+      </div>
+      <div style="background:var(--white);border:1px solid var(--gray-3);border-radius:var(--radius-xl);padding:20px;box-shadow:var(--shadow)">
+        <div style="font-size:14px;font-weight:600;margin-bottom:8px">📄 Export as CSV</div>
+        <div style="font-size:12px;color:var(--gray-6);margin-bottom:14px;line-height:1.6">Raw CSV matching the same column layout as the Excel template. Import directly into Google Sheets.</div>
+        <button class="btn" onclick="exportCSV()">⬇️ Download CSV</button>
+      </div>
+      <div style="background:var(--white);border:1px solid var(--gray-3);border-radius:var(--radius-xl);padding:20px;box-shadow:var(--shadow)">
+        <div style="font-size:14px;font-weight:600;margin-bottom:8px">🗄 Export JSON backup</div>
+        <div style="font-size:12px;color:var(--gray-6);margin-bottom:14px;line-height:1.6">Full data backup including all photo URLs. Use to restore or migrate to another device.</div>
+        <button class="btn" onclick="exportJSON()">⬇️ Download JSON</button>
+      </div>
+      <div style="background:var(--white);border:1px solid var(--gray-3);border-radius:var(--radius-xl);padding:20px;box-shadow:var(--shadow)">
+        <div style="font-size:14px;font-weight:600;margin-bottom:8px">📂 Import JSON</div>
+        <div style="font-size:12px;color:var(--gray-6);margin-bottom:14px;line-height:1.6">Restore from a JSON backup. New entries merged; existing IDs not overwritten.</div>
+        <input type="file" id="imp" accept=".json" style="display:none" onchange="importJSON(this)">
+        <button class="btn" onclick="document.getElementById('imp').click()">📁 Choose file</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── ADMIN PANEL ─── -->
+  <div id="pane-admin" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+      <div style="font-size:17px;font-weight:700">User Management</div>
+      <button class="btn btn-green" onclick="openNewUserModal()">➕ Create User</button>
+    </div>
+    <div style="background:var(--white);border:1px solid var(--gray-3);border-radius:var(--radius-xl);overflow:hidden;box-shadow:var(--shadow)">
+      <table class="user-table" id="user-table"></table>
+    </div>
+    <div style="margin-top:20px;background:var(--white);border:1px solid var(--gray-3);border-radius:var(--radius-xl);padding:20px;box-shadow:var(--shadow)">
+      <div style="font-size:14px;font-weight:600;margin-bottom:12px">⚠️ Danger Zone</div>
+      <div style="font-size:13px;color:var(--gray-6);margin-bottom:12px">Clear the entire PG database. This cannot be undone — export first.</div>
+      <button class="btn btn-red" onclick="nukeDB()">🗑 Clear entire PG database</button>
+    </div>
+  </div>
+
+  <!-- ─── SETTINGS ─── -->
+  <div id="pane-cfg" style="display:none">
+    <div style="max-width:560px">
+      <div class="fsec">
+        <div class="fsec-title">🗄 JSONBin (shared cloud database)</div>
+        <div style="font-size:12px;color:var(--gray-6);margin-bottom:14px;line-height:1.6">
+          Sign up free at <a href="https://jsonbin.io" target="_blank" style="color:var(--b)">jsonbin.io</a> → copy your Master Key → paste below. All users sharing the same key see the same data.
+        </div>
+        <div class="fg" style="margin-bottom:10px"><label>Master Key (starts with $2b$...)</label><input id="cfg-jbin" type="password" placeholder="$2b$10$..."></div>
+        <div class="fg" style="margin-bottom:14px"><label>Bin ID <span style="font-weight:400;color:var(--gray-4)">(auto-created on first save)</span></label><input id="cfg-bid" placeholder="auto-filled"></div>
+        <button class="btn btn-green" onclick="testJSONBin()">🔗 Test & Save</button>
+        <span id="jbin-status" style="font-size:12px;color:var(--gray-6);margin-left:10px"></span>
+      </div>
+      <div class="fsec">
+        <div class="fsec-title">📸 Cloudinary (photo hosting)</div>
+        <div style="font-size:12px;color:var(--gray-6);margin-bottom:14px;line-height:1.6">
+          Sign up free at <a href="https://cloudinary.com" target="_blank" style="color:var(--b)">cloudinary.com</a> → Dashboard → copy Cloud Name → Settings → Upload → create an <strong>Unsigned upload preset</strong> with folder <code>pg_finder_blr</code>.
+        </div>
+        <div class="frow">
+          <div class="fg"><label>Cloud Name</label><input id="cfg-cld" placeholder="e.g. my-cloud-name"></div>
+          <div class="fg"><label>Upload Preset (unsigned)</label><input id="cfg-preset" placeholder="e.g. pg_photos"></div>
+        </div>
+        <button class="btn btn-green" onclick="saveCldCfg()">💾 Save Cloudinary Config</button>
+      </div>
+      <div class="fsec">
+        <div class="fsec-title">🔑 Change my password</div>
+        <div class="frow three">
+          <div class="fg"><label>Current password</label><input type="password" id="pw-old" placeholder="Current"></div>
+          <div class="fg"><label>New password</label><input type="password" id="pw-new" placeholder="New"></div>
+          <div class="fg"><label>Confirm new</label><input type="password" id="pw-conf" placeholder="Confirm"></div>
+        </div>
+        <button class="btn btn-green" onclick="changePassword()">🔒 Change Password</button>
+      </div>
+    </div>
+  </div>
+</div><!-- /wrap -->
+</div><!-- /main-app -->
+
+<!-- ─── NEW USER MODAL ─── -->
+<div class="modal-bg" id="modal-user" style="display:none">
+  <div class="modal">
+    <h2 id="modal-user-title">Create New User</h2>
+    <div class="msub">Enter details for the maintainer account. They can add and edit PG listings after logging in.</div>
+    <input type="hidden" id="mu-id">
+    <div class="fg" style="margin-bottom:12px"><label>Username</label><input id="mu-user" placeholder="e.g. suresh123"></div>
+    <div class="fg" style="margin-bottom:12px"><label>Password</label><input id="mu-pass" type="password" placeholder="min 6 characters"></div>
+    <div class="fg" style="margin-bottom:20px"><label>Confirm Password</label><input id="mu-conf" type="password" placeholder="repeat password"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-green" onclick="saveUser()">✅ Save User</button>
+      <button class="btn" onclick="closeModal('modal-user')">Cancel</button>
+    </div>
+    <div id="mu-err" style="font-size:12px;color:var(--r);margin-top:10px;display:none"></div>
+  </div>
+</div>
+
+<!-- ─── DELETE CONFIRM MODAL ─── -->
+<div class="modal-bg" id="modal-del" style="display:none">
+  <div class="modal">
+    <h2>Delete PG?</h2>
+    <div class="msub" id="del-msg">This will permanently remove this PG and all its data.</div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-red" onclick="confirmDelete()">🗑 Yes, Delete</button>
+      <button class="btn" onclick="closeModal('modal-del')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="lb" id="lb" onclick="closeLB()"><button class="lb-close" onclick="closeLB()">✕</button><img id="lb-img" src="" alt=""></div>
+<div class="toast" id="toast"></div>
+
+<script src="db.js"></script>
+<script>
+// ── State ─────────────────────────────────────────────────────
+let DB = [], sess = null, editId = null, revCount = 0;
+let stagingImgs = {}; // pgId -> {amenity,food,infra}
+let pendingDeleteId = null;
+
+// ── Login ──────────────────────────────────────────────────────
+function doLogin() {
+  const u = document.getElementById('l-user').value.trim();
+  const p = document.getElementById('l-pass').value;
+  const s = loginUser(u, p);
+  if (!s) { document.getElementById('login-err').style.display='block'; return; }
+  sess = s;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('main-app').style.display = 'block';
+  document.getElementById('user-chip').textContent = '👤 ' + s.username;
+  if (s.isAdmin) document.getElementById('tab-admin').style.display = 'flex';
+  loadCfgUI();
+  init();
+}
+
+// ── Init ──────────────────────────────────────────────────────
+async function init() {
+  const cloud = await loadFromCloud();
+  DB = cloud || getDB();
+  if (cloud) { document.getElementById('sdot').className='sdot ok'; document.getElementById('slbl').textContent='Synced'; }
+  renderPGList();
+}
+
+// ── Tab switcher ──────────────────────────────────────────────
+function switchTab(t) {
+  ['pgs','add','export','admin','cfg'].forEach(id => {
+    const p = document.getElementById('pane-'+id);
+    const b = document.getElementById('tab-'+id);
+    if (p) p.style.display = id===t?'block':'none';
+    if (b) b.classList.toggle('active', id===t);
+  });
+  if (t==='add' && !editId) clearForm();
+  if (t==='admin' && sess?.isAdmin) renderUserTable();
+}
+
+// ── PG list ────────────────────────────────────────────────────
+function renderPGList() {
+  const q  = document.getElementById('q').value.toLowerCase();
+  const gf = document.getElementById('gf').value;
+  const sf = document.getElementById('sf').value;
+  let list = DB.filter(pg => {
+    if (q && !pg.name.toLowerCase().includes(q) && !(pg.addr||'').toLowerCase().includes(q)) return false;
+    if (gf && pg.gender !== gf) return false;
+    return true;
+  });
+  if (sf==='rent')  list.sort((a,b)=>(a.r1||999999)-(b.r1||999999));
+  else if (sf==='score') list.sort((a,b)=>avgScore(b)-avgScore(a));
+  else list.sort((a,b)=>a.name.localeCompare(b.name));
+  const grid = document.getElementById('pg-list-grid');
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty"><span class="empty-icon">🏚️</span>${DB.length?'No PGs match.':'No PGs yet — use Add PG to start.'}</div>`;
+    return;
+  }
+  grid.innerHTML = list.map(pg => {
+    const sc = avgScore(pg);
+    const thumb = pg.imgs?.infra?.[0] || pg.imgs?.amenity?.[0] || '';
+    const ams = AMENITIES.filter(a=>pg[a.id]);
+    return `<div class="pg-card">
+      ${thumb?`<img class="pg-card-thumb" src="${thumb}" loading="lazy" alt="${pg.name}">`:`<div class="pg-card-thumb-empty">🏠</div>`}
+      <div class="pg-card-body">
+        <div class="pg-card-top">
+          <div class="pg-card-name">${pg.name}</div>
+          ${sc>0?`<div class="score-pill" style="background:${scoreColor(sc)}22;color:${scoreColor(sc)};border:1px solid ${scoreColor(sc)}44">⭐${sc}</div>`:''}
+        </div>
+        <div class="pg-card-loc">📍 ${pg.addr||'—'}</div>
+        <div class="tag-row">
+          ${pg.gender?`<span class="tag">${pg.gender}</span>`:''}
+          ${ams.slice(0,3).map(a=>`<span class="tag">${a.label}</span>`).join('')}
+          ${ams.length>3?`<span class="tag">+${ams.length-3}</span>`:''}
+        </div>
+        <div class="rent-row">
+          ${pg.r1?`<span class="rent-pill">₹${fmt(pg.r1)}</span>`:''}
+          ${pg.r2?`<span class="rent-pill">₹${fmt(pg.r2)}</span>`:''}
+          ${pg.r3?`<span class="rent-pill">₹${fmt(pg.r3)}</span>`:''}
+        </div>
+        <div class="pg-card-foot">
+          <div class="pg-card-contact">${pg.phone||'—'}</div>
+          <div class="pg-card-actions">
+            <button class="btn btn-sm btn-icon" title="Edit" onclick="editPG('${pg.id}')">✏️</button>
+            <button class="btn btn-sm btn-icon btn-red" title="Delete" onclick="askDelete('${pg.id}')">🗑</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Form helpers ──────────────────────────────────────────────
+function updateAch(cb, wrapId) { document.getElementById(wrapId).classList.toggle('checked', cb.checked); }
+
+function clearForm() {
+  editId = null; revCount = 0;
+  document.getElementById('eid').value = '';
+  document.getElementById('form-title').textContent = 'Add new PG';
+  ['fn','fa','fm','fo','fp','fe','fr1','fr2','fr3','fd','fma','ffa','ffq','fcl'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  ['fg2','fel','ffd','fw'].forEach(id => { const el = document.getElementById(id); if (el) el.selectedIndex = 0; });
+  AMENITIES.forEach(a => {
+    const cb = document.getElementById('a-'+a.id);
+    if (cb) { cb.checked = false; document.getElementById('ach-'+a.id).classList.remove('checked'); }
+  });
+  document.getElementById('rev-list').innerHTML = '';
+  addRev();
+  ['amenity','food','infra'].forEach(t => { document.getElementById('prev-'+t).innerHTML = ''; });
+  stagingImgs = {};
+}
+
+function editPG(id) {
+  const pg = DB.find(p=>p.id===id); if (!pg) return;
+  editId = id;
+  document.getElementById('eid').value = id;
+  document.getElementById('form-title').textContent = 'Editing: ' + pg.name;
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v||''; };
+  set('fn', pg.name); set('fa', pg.addr); set('fm', pg.mapLink);
+  set('fo', pg.owner); set('fp', pg.phone); set('fe', pg.email);
+  set('fr1', pg.r1||''); set('fr2', pg.r2||''); set('fr3', pg.r3||'');
+  set('fd', pg.deposit||''); set('fma', pg.maint||''); set('ffa', pg.foodAmt||'');
+  set('ffq', pg.foodQ||''); set('fcl', pg.clean||'');
+  document.getElementById('fg2').value = pg.gender || 'Male';
+  document.getElementById('fel').value = pg.elec || '';
+  document.getElementById('ffd').value = pg.food || '';
+  document.getElementById('fw').value  = pg.wifi || '';
+  AMENITIES.forEach(a => {
+    const cb = document.getElementById('a-'+a.id);
+    if (cb) { cb.checked = !!pg[a.id]; document.getElementById('ach-'+a.id).classList.toggle('checked', !!pg[a.id]); }
+  });
+  document.getElementById('rev-list').innerHTML = ''; revCount = 0;
+  (pg.reviews||[]).forEach(r => addRev(r.text, r.score));
+  const imgs = pg.imgs || {};
+  stagingImgs[id] = {
+    amenity: [...(imgs.amenity||[])],
+    food:    [...(imgs.food||[])],
+    infra:   [...(imgs.infra||[])]
+  };
+  ['amenity','food','infra'].forEach(type => {
+    const prev = document.getElementById('prev-'+type); prev.innerHTML = '';
+    (imgs[type]||[]).forEach(src => appendPreview(prev, src, id, type));
+  });
+  switchTab('add');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function addRev(text='', score='') {
+  revCount++;
+  const id = 'rv' + revCount;
+  const d = document.createElement('div');
+  d.className = 'rev-row'; d.id = id;
+  d.innerHTML = `
+    <input class="rt" placeholder="Resident name or review text..." value="${text}"
+      style="flex:1;padding:8px 10px;border-radius:var(--radius);border:1px solid var(--gray-3);font-size:13px;font-family:inherit">
+    <input type="number" class="rs" placeholder="Score" min="0" max="10" value="${score}"
+      style="width:68px;padding:8px;border-radius:var(--radius);border:1px solid var(--gray-3);font-size:13px;text-align:center;font-family:inherit">
+    <button class="btn btn-sm btn-icon btn-red" onclick="document.getElementById('${id}').remove()">✕</button>`;
+  document.getElementById('rev-list').appendChild(d);
+}
+
+function getRevs() {
+  return Array.from(document.querySelectorAll('.rev-row')).map(row => {
+    const ins = row.querySelectorAll('input');
+    return { text: ins[0].value.trim(), score: +ins[1].value || 0 };
+  }).filter(r => r.text);
+}
+
+// ── Image uploads ─────────────────────────────────────────────
+async function handleUpload(input, type) {
+  const imgId = editId || '_new';
+  if (!stagingImgs[imgId]) stagingImgs[imgId] = {amenity:[], food:[], infra:[]};
+  const pb = document.getElementById('pb-'+type);
+  const pf = document.getElementById('pf-'+type);
+  const prev = document.getElementById('prev-'+type);
+  const files = Array.from(input.files);
+  pb.classList.add('show'); pf.style.width = '5%';
+  for (let i = 0; i < files.length; i++) {
+    const url = await uploadImage(files[i], p => { pf.style.width = Math.round((i + p) / files.length * 100) + '%'; });
+    if (url) {
+      stagingImgs[imgId][type].push(url);
+      appendPreview(prev, url, imgId, type);
+    }
+    pf.style.width = Math.round((i+1)/files.length*100) + '%';
+  }
+  setTimeout(() => { pb.classList.remove('show'); pf.style.width='0'; }, 800);
+  input.value = '';
+}
+
+function appendPreview(container, src, imgId, type) {
+  const w = document.createElement('div'); w.className = 'previtem';
+  w.innerHTML = `<img src="${src}" alt="${type}" onclick="openLB('${src}')"><button class="prm" onclick="removeImg(this,'${imgId}','${type}')">✕</button>`;
+  container.appendChild(w);
+}
+
+function removeImg(btn, imgId, type) {
+  const src = btn.parentElement.querySelector('img').src;
+  if (stagingImgs[imgId]?.[type]) stagingImgs[imgId][type] = stagingImgs[imgId][type].filter(s=>s!==src);
+  btn.parentElement.remove();
+}
+
+// ── Save PG ────────────────────────────────────────────────────
+async function savePG() {
+  const name = document.getElementById('fn').value.trim();
+  if (!name) { toast('PG name is required','err'); return; }
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true; btn.textContent = '⏳ Saving...';
+
+  const id = editId || ('pg_' + Date.now());
+  const existing = editId ? (DB.find(p=>p.id===editId)||{}).imgs || {} : {};
+  const staged = stagingImgs[id] || stagingImgs['_new'] || {};
+  const imgs = {
+    amenity: [...new Set([...(existing.amenity||[]), ...(staged.amenity||[])])],
+    food:    [...new Set([...(existing.food||[]),    ...(staged.food||[])])],
+    infra:   [...new Set([...(existing.infra||[]),   ...(staged.infra||[])])],
+  };
+
+  const pg = {
+    id, name,
+    gender:   document.getElementById('fg2').value,
+    addr:     document.getElementById('fa').value.trim(),
+    mapLink:  document.getElementById('fm').value.trim(),
+    owner:    document.getElementById('fo').value.trim(),
+    phone:    document.getElementById('fp').value.trim(),
+    email:    document.getElementById('fe').value.trim(),
+    r1:       +document.getElementById('fr1').value || 0,
+    r2:       +document.getElementById('fr2').value || 0,
+    r3:       +document.getElementById('fr3').value || 0,
+    deposit:  +document.getElementById('fd').value  || 0,
+    maint:    +document.getElementById('fma').value || 0,
+    elec:     document.getElementById('fel').value,
+    food:     document.getElementById('ffd').value,
+    foodAmt:  +document.getElementById('ffa').value || 0,
+    wifi:     document.getElementById('fw').value,
+    clean:    document.getElementById('fcl').value.trim(),
+    foodQ:    document.getElementById('ffq').value.trim(),
+    reviews:  getRevs(),
+    imgs,
+    addedBy:  sess.username,
+    added:    editId ? (DB.find(p=>p.id===editId)||{}).added || new Date().toISOString().slice(0,10) : new Date().toISOString().slice(0,10),
+    updated:  new Date().toISOString().slice(0,10),
+  };
+  AMENITIES.forEach(a => pg[a.id] = document.getElementById('a-'+a.id).checked);
+
+  if (editId) { const idx = DB.findIndex(p=>p.id===editId); if (idx>=0) DB[idx]=pg; }
+  else DB.push(pg);
+
+  document.getElementById('sdot').className = 'sdot spin';
+  document.getElementById('slbl').textContent = 'Saving...';
+  saveDB(DB);
+  document.getElementById('sdot').className = 'sdot ok';
+  document.getElementById('slbl').textContent = 'Synced';
+
+  delete stagingImgs[id]; delete stagingImgs['_new'];
+  toast((editId?'Updated':'Saved') + ': ' + name, 'ok');
+  btn.disabled = false; btn.textContent = '💾 Save PG';
+  clearForm();
+  switchTab('pgs');
+}
+
+// ── Delete ─────────────────────────────────────────────────────
+function askDelete(id) {
+  pendingDeleteId = id;
+  const pg = DB.find(p=>p.id===id);
+  document.getElementById('del-msg').textContent = `This will permanently remove "${pg?.name}" and all its data.`;
+  document.getElementById('modal-del').style.display = 'flex';
+}
+function confirmDelete() {
+  if (!pendingDeleteId) return;
+  DB = DB.filter(p=>p.id!==pendingDeleteId);
+  saveDB(DB);
+  pendingDeleteId = null;
+  closeModal('modal-del');
+  renderPGList();
+  toast('PG deleted', 'ok');
+}
+function nukeDB() {
+  if (!confirm('Delete ALL ' + DB.length + ' PG entries? This cannot be undone!')) return;
+  DB = [];
+  saveDB(DB);
+  renderPGList();
+  toast('Database cleared');
+}
+
+// ── Admin — user table ─────────────────────────────────────────
+function renderUserTable() {
+  const users = getUsers();
+  const table = document.getElementById('user-table');
+  table.innerHTML = `
+    <thead><tr>
+      <th>Username</th><th>Status</th><th>Created</th><th>Actions</th>
+    </tr></thead>
+    <tbody>
+    ${users.map(u => `
+      <tr>
+        <td><strong>${u.username}</strong></td>
+        <td><span class="status-pill ${u.active?'status-active':'status-paused'}">${u.active?'✓ Active':'⏸ Paused'}</span></td>
+        <td style="color:var(--gray-6);font-size:12px">${u.created||'—'}</td>
+        <td style="display:flex;gap:6px;flex-wrap:wrap">
+          ${u.id!==sess.userId ? `
+            <button class="btn btn-sm" onclick="toggleUser('${u.id}')">${u.active?'⏸ Pause':'▶ Activate'}</button>
+            <button class="btn btn-sm" onclick="openEditUserModal('${u.id}')">✏️ Edit</button>
+            <button class="btn btn-sm btn-red" onclick="deleteUser('${u.id}')">🗑 Delete</button>
+          ` : `<span style="font-size:12px;color:var(--gray-4)">(your account)</span>`}
+        </td>
+      </tr>`).join('')}
+    </tbody>`;
+}
+
+function toggleUser(id) {
+  const users = getUsers();
+  const u = users.find(x=>x.id===id); if (!u) return;
+  u.active = !u.active;
+  saveUsers(users);
+  renderUserTable();
+  toast(u.username + (u.active?' activated':' paused'));
+}
+
+function deleteUser(id) {
+  const users = getUsers();
+  const u = users.find(x=>x.id===id);
+  if (!confirm(`Delete user "${u?.username}"? This cannot be undone.`)) return;
+  saveUsers(users.filter(x=>x.id!==id));
+  renderUserTable();
+  toast('User deleted');
+}
+
+function openNewUserModal() {
+  document.getElementById('modal-user-title').textContent = 'Create New User';
+  document.getElementById('mu-id').value = '';
+  document.getElementById('mu-user').value = '';
+  document.getElementById('mu-pass').value = '';
+  document.getElementById('mu-conf').value = '';
+  document.getElementById('mu-err').style.display = 'none';
+  document.getElementById('modal-user').style.display = 'flex';
+}
+function openEditUserModal(id) {
+  const u = getUsers().find(x=>x.id===id); if (!u) return;
+  document.getElementById('modal-user-title').textContent = 'Edit User: ' + u.username;
+  document.getElementById('mu-id').value = id;
+  document.getElementById('mu-user').value = u.username;
+  document.getElementById('mu-pass').value = '';
+  document.getElementById('mu-conf').value = '';
+  document.getElementById('mu-err').style.display = 'none';
+  document.getElementById('modal-user').style.display = 'flex';
+}
+
+function saveUser() {
+  const id   = document.getElementById('mu-id').value;
+  const user = document.getElementById('mu-user').value.trim();
+  const pass = document.getElementById('mu-pass').value;
+  const conf = document.getElementById('mu-conf').value;
+  const err  = document.getElementById('mu-err');
+  err.style.display = 'none';
+  if (!user) { err.textContent='Username required'; err.style.display='block'; return; }
+  const users = getUsers();
+  if (!id && users.find(u=>u.username===user)) { err.textContent='Username already taken'; err.style.display='block'; return; }
+  if (pass && pass.length < 6) { err.textContent='Password must be at least 6 characters'; err.style.display='block'; return; }
+  if (pass && pass !== conf)   { err.textContent='Passwords do not match'; err.style.display='block'; return; }
+
+  if (id) {
+    const u = users.find(x=>x.id===id);
+    if (u) { u.username = user; if (pass) u.password = btoa(pass); }
+  } else {
+    if (!pass) { err.textContent='Password required for new user'; err.style.display='block'; return; }
+    users.push({ id:'u_'+Date.now(), username:user, password:btoa(pass), isAdmin:false, active:true, created:new Date().toISOString().slice(0,10) });
+  }
+  saveUsers(users);
+  closeModal('modal-user');
+  renderUserTable();
+  toast(id ? 'User updated' : 'User created: ' + user, 'ok');
+}
+
+// ── Settings ──────────────────────────────────────────────────
+function loadCfgUI() {
+  const cfg = getCfg();
+  if (cfg.jbinKey) document.getElementById('cfg-jbin').value = cfg.jbinKey;
+  if (cfg.binId)   document.getElementById('cfg-bid').value  = cfg.binId;
+  if (cfg.cldName) document.getElementById('cfg-cld').value  = cfg.cldName;
+  if (cfg.preset)  document.getElementById('cfg-preset').value = cfg.preset;
+}
+async function testJSONBin() {
+  const key = document.getElementById('cfg-jbin').value.trim();
+  const bid = document.getElementById('cfg-bid').value.trim();
+  if (!key) { toast('Paste your Master Key first','err'); return; }
+  const cfg = getCfg(); cfg.jbinKey = key; if (bid) cfg.binId = bid;
+  saveCfg(cfg);
+  const status = document.getElementById('jbin-status');
+  status.textContent = '⏳ Connecting...';
+  const result = await loadFromCloud();
+  if (result !== null) {
+    DB = result; renderPGList();
+    status.textContent = '✅ Connected! ' + DB.length + ' PGs loaded.';
+    document.getElementById('cfg-bid').value = getCfg().binId || '';
+    document.getElementById('sdot').className='sdot ok';
+    document.getElementById('slbl').textContent='Synced';
+  } else {
+    status.textContent = '❌ Connection failed — check your key.';
+  }
+}
+function saveCldCfg() {
+  const cfg = getCfg();
+  cfg.cldName = document.getElementById('cfg-cld').value.trim();
+  cfg.preset  = document.getElementById('cfg-preset').value.trim();
+  saveCfg(cfg);
+  toast('Cloudinary config saved', 'ok');
+}
+function changePassword() {
+  const old  = document.getElementById('pw-old').value;
+  const nw   = document.getElementById('pw-new').value;
+  const conf = document.getElementById('pw-conf').value;
+  const users = getUsers();
+  const u = users.find(x=>x.id===sess.userId);
+  if (!u || u.password !== btoa(old)) { toast('Current password is incorrect','err'); return; }
+  if (nw.length < 6) { toast('New password must be at least 6 characters','err'); return; }
+  if (nw !== conf)   { toast('Passwords do not match','err'); return; }
+  u.password = btoa(nw);
+  saveUsers(users);
+  ['pw-old','pw-new','pw-conf'].forEach(id=>document.getElementById(id).value='');
+  toast('Password changed successfully', 'ok');
+}
+
+// ── Export CSV ─────────────────────────────────────────────────
+function exportCSV() {
+  if (!DB.length) { toast('No data to export','err'); return; }
+  const headers = [
+    'PG Name','Gender','Full Address','Google Maps Link','Owner / Manager','Phone Number',
+    'Single Bed ₹/mo','Double Sharing ₹/mo','Triple Sharing ₹/mo',
+    'Security Deposit ₹','Maintenance ₹/mo','Electricity','WiFi',
+    'Laundry','Housekeeping','Lift','Parking','Drinking Water','CCTV','AC Rooms','Gym','Power Backup',
+    'Food Included?','Food Type','Food ₹/mo',
+    'Avg Review Score /10','Review Count','Resident Reviews (text)',
+    'Cleanliness Notes','Food Quality Notes',
+    'Amenity Photo 1','Amenity Photo 2','Food Photo 1','Food Photo 2','Infra Photo 1','Infra Photo 2',
+    'Date Added','Last Updated'
+  ];
+  const rows = DB.map(pg => [
+    pg.name, pg.gender, pg.addr, pg.mapLink, pg.owner, pg.phone,
+    pg.r1||'', pg.r2||'', pg.r3||'',
+    pg.deposit||'', pg.maint||'', pg.elec, pg.wifi,
+    pg.laundry?'Yes':'No', pg.hk?'Yes':'No', pg.lift?'Yes':'No', pg.parking?'Yes':'No',
+    pg.water?'Yes':'No', pg.cctv?'Yes':'No', pg.ac?'Yes':'No', pg.gym?'Yes':'No', pg.power?'Yes':'No',
+    (pg.food||'').includes('Included')?'Included':'Separate',
+    pg.food||'', pg.foodAmt||'',
+    avgScore(pg)||'', (pg.reviews||[]).length, (pg.reviews||[]).map(r=>r.text).join(' | '),
+    pg.clean||'', pg.foodQ||'',
+    pg.imgs?.amenity?.[0]||'', pg.imgs?.amenity?.[1]||'',
+    pg.imgs?.food?.[0]||'',    pg.imgs?.food?.[1]||'',
+    pg.imgs?.infra?.[0]||'',   pg.imgs?.infra?.[1]||'',
+    pg.added||'', pg.updated||''
+  ].map(v => '"' + String(v===null||v===undefined?'':v).replace(/"/g,'""') + '"'));
+  const csv = [headers.map(h=>`"${h}"`).join(','), ...rows.map(r=>r.join(','))].join('\n');
+  dl('PG_Database_Bengaluru.csv', 'text/csv', csv);
+  toast('CSV downloaded', 'ok');
+}
+
+// ── Export XLSX ────────────────────────────────────────────────
+function exportXLSX() {
+  // We'll use the server-side generator approach via download
+  // Since we're static, we build XML-based xlsx manually
+  const wb = buildXLSX();
+  dl('PG_Finder_Bengaluru.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', wb);
+  toast('Excel file downloaded', 'ok');
+}
+
+function buildXLSX() {
+  // Build a proper xlsx using the ExcelJS-compatible format via Blob
+  // We'll use a library loaded dynamically
+  if (!window._xlsxBuilding) {
+    window._xlsxBuilding = true;
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    script.onload = () => { window._xlsxBuilding = false; doExportXLSX(); };
+    document.head.appendChild(script);
+  }
+}
+function doExportXLSX() {
+  if (!window.XLSX) { toast('Excel library loading, try again in a second','err'); return; }
+  const XLSX = window.XLSX;
+  const wb = XLSX.utils.book_new();
+
+  // ── Sheet 1: PG Database ──────────────────────────────────
+  const groupHeaders = [
+    { label:'BASIC INFO',        cols:2,  color:'0F6E56' },
+    { label:'LOCATION & CONTACT',cols:4,  color:'185FA5' },
+    { label:'RENT (₹/month)',    cols:3,  color:'BA7517' },
+    { label:'OTHER CHARGES',     cols:4,  color:'634508' },
+    { label:'AMENITIES',         cols:9,  color:'3B6D11' },
+    { label:'FOOD',              cols:3,  color:'993C1D' },
+    { label:'REVIEWS',           cols:3,  color:'534AB7' },
+    { label:'CLEANLINESS',       cols:2,  color:'5F5E5A' },
+    { label:'PHOTOS & LINKS',    cols:8,  color:'185FA5' },
+  ];
+  const colHeaders = [
+    'PG Name','Gender\n(M/F/Co-ed)',
+    'Full Address','Google Maps Link','Owner / Manager','Phone Number',
+    'Single Bed\n₹/mo','Double Sharing\n₹/mo','Triple Sharing\n₹/mo',
+    'Security\nDeposit ₹','Maintenance\n₹/mo','Electricity','WiFi',
+    'Laundry','Housekeeping','Lift','Parking','Drinking\nWater','CCTV','AC Rooms','Gym','Power\nBackup',
+    'Food\nIncluded?','Food Type','Food\n₹/mo',
+    'Avg Review\nScore /10','Review Count','Resident Reviews\n(text)',
+    'Cleanliness\nNotes','Food Quality\nNotes',
+    'Amenity\nPhoto 1','Amenity\nPhoto 2','Food\nPhoto 1','Food\nPhoto 2',
+    'Infra\nPhoto 1','Infra\nPhoto 2','Date Added','Last Updated'
+  ];
+  const dbData = [
+    ['🏠  PG FINDER — BENGALURU  |  Comprehensive Database'],
+    ['Auto-populated & manually maintained PG listing with amenities, costs, reviews and contact info'],
+    groupHeaders.map(g=>g.label).reduce((acc,label,i)=>{
+      // build group row
+      const g = groupHeaders[i];
+      acc.push(label);
+      for(let j=1;j<g.cols;j++) acc.push('');
+      return acc;
+    },[]),
+    colHeaders,
+    ...DB.map(pg=>[
+      pg.name, pg.gender,
+      pg.addr, pg.mapLink, pg.owner, pg.phone,
+      pg.r1||0, pg.r2||0, pg.r3||0,
+      pg.deposit||0, pg.maint||0, pg.elec||'', pg.wifi||'',
+      pg.laundry?'Yes':'No',pg.hk?'Yes':'No',pg.lift?'Yes':'No',pg.parking?'Yes':'No',
+      pg.water?'Yes':'No',pg.cctv?'Yes':'No',pg.ac?'Yes':'No',pg.gym?'Yes':'No',pg.power?'Yes':'No',
+      (pg.food||'').includes('Included')?'Included':'Separate',
+      pg.food||'', pg.foodAmt||0,
+      avgScore(pg)||0, (pg.reviews||[]).length, (pg.reviews||[]).map(r=>r.text).join(' | '),
+      pg.clean||'', pg.foodQ||'',
+      pg.imgs?.amenity?.[0]||'', pg.imgs?.amenity?.[1]||'',
+      pg.imgs?.food?.[0]||'',    pg.imgs?.food?.[1]||'',
+      pg.imgs?.infra?.[0]||'',   pg.imgs?.infra?.[1]||'',
+      pg.added||'', pg.updated||''
+    ])
+  ];
+  const ws1 = XLSX.utils.aoa_to_sheet(dbData);
+  // Set column widths
+  const colWidths = [20,10,35,25,18,14,12,12,12,12,12,18,18,10,12,8,8,10,8,8,8,10,12,14,10,12,10,35,25,25,12,12,12,12,12,12,12,12];
+  ws1['!cols'] = colWidths.map(w=>({wch:w}));
+  ws1['!merges'] = [{s:{r:0,c:0},e:{r:0,c:37}}];
+  XLSX.utils.book_append_sheet(wb, ws1, 'PG Database');
+
+  // ── Sheet 2: Summary Dashboard ──────────────────────────
+  const amenStats = AMENITIES.map(a=>({
+    label:a.label,
+    count:DB.filter(p=>p[a.id]).length,
+    pct:DB.length?Math.round(DB.filter(p=>p[a.id]).length/DB.length*100):0
+  }));
+  const allRents = DB.map(p=>p.r1).filter(r=>r>0);
+  const allScores = DB.map(p=>avgScore(p)).filter(s=>s>0);
+  const summaryData = [
+    ['PG DATABASE — SUMMARY DASHBOARD'],[''],
+    ['Total PGs','','Avg Single Rent','','Avg Review Score','','With Food','','With CCTV','','With AC',''],
+    [
+      DB.length,'',
+      allRents.length?'₹'+Math.round(allRents.reduce((a,b)=>a+b,0)/allRents.length).toLocaleString('en-IN'):'—','',
+      allScores.length?(allScores.reduce((a,b)=>a+b,0)/allScores.length).toFixed(1)+'/10':'—','',
+      DB.filter(p=>(p.food||'').includes('Included')).length,'',
+      DB.filter(p=>p.cctv).length,'',
+      DB.filter(p=>p.ac).length,''
+    ],[],
+    ['Amenity','Count (Yes)','% Coverage'],
+    ...amenStats.map(a=>[a.label, a.count, a.pct+'%']),
+    [],
+    ['Top Rated PGs'],
+    ...[...DB].filter(p=>avgScore(p)>0).sort((a,b)=>avgScore(b)-avgScore(a)).slice(0,5)
+      .map(pg=>[pg.name, avgScore(pg)+'/10', pg.addr]),
+    [],['Most Affordable (Single)'],
+    ...[...DB].filter(p=>p.r1>0).sort((a,b)=>a.r1-b.r1).slice(0,5)
+      .map(pg=>[pg.name, '₹'+fmt(pg.r1)+'/mo', pg.addr])
+  ];
+  const ws2 = XLSX.utils.aoa_to_sheet(summaryData);
+  ws2['!cols'] = [{wch:22},{wch:14},{wch:16}];
+  ws2['!merges'] = [{s:{r:0,c:0},e:{r:0,c:11}}];
+  XLSX.utils.book_append_sheet(wb, ws2, '📊 Summary Dashboard');
+
+  // ── Sheet 3: Manual Entry Guide ──────────────────────────
+  const guideData = [
+    ['MANUAL ENTRY GUIDE — Fill one PG per column group'],
+    ['Field','Notes / Options','PG 1 →','PG 2 →'],
+    ['BASIC INFO','','',''],
+    ['PG Name','Full name of the PG accommodation','',''],
+    ['Gender','Male / Female / Co-ed','',''],
+    ['Full Address','House no., street, area, Bengaluru - PIN','',''],
+    ['Google Maps Link','Paste the Google Maps share link','',''],
+    ['CONTACT','','',''],
+    ['Owner/Manager Name','Full name of the contact person','',''],
+    ['Phone Number','+91 XXXXX XXXXX','',''],
+    ['Email','Optional','',''],
+    ['RENT & CHARGES','','',''],
+    ['Single Bed Rent','Monthly rent in ₹ for single occupancy','',''],
+    ['Double Sharing Rent','Monthly rent in ₹ per person, double sharing','',''],
+    ['Triple Sharing Rent','Monthly rent in ₹ per person, triple sharing','',''],
+    ['Security Deposit','One-time refundable deposit in ₹','',''],
+    ['Maintenance Charge','Monthly maintenance in ₹ (0 if none)','',''],
+    ['Electricity','Included in rent / Per unit metered / Fixed monthly','',''],
+    ['WiFi','Included in rent / Separate charge / Not available','',''],
+    ['Food','Included in rent / Separate / Not provided','',''],
+    ['Food Amount','Monthly food charge in ₹ if separate','',''],
+    ['AMENITIES','','',''],
+    ...AMENITIES.map(a=>[a.label,'Yes / No','','']),
+    ['REVIEWS & QUALITY','','',''],
+    ['Avg Review Score','0–10 based on resident feedback','',''],
+    ['Resident Reviews','Paste reviews separated by " | "','',''],
+    ['Food Quality Notes','Describe food quality, variety, timing','',''],
+    ['Cleanliness Notes','Common areas, bathrooms, rooms','',''],
+    ['PHOTOS','','',''],
+    ['Amenity Photos','Paste image URLs or note filenames','',''],
+    ['Food Photos','Paste image URLs — leave blank if not available','',''],
+    ['Infrastructure Photos','Room and common area photos','',''],
+  ];
+  const ws3 = XLSX.utils.aoa_to_sheet(guideData);
+  ws3['!cols'] = [{wch:22},{wch:45},{wch:18},{wch:18}];
+  ws3['!merges'] = [{s:{r:0,c:0},e:{r:0,c:3}}];
+  XLSX.utils.book_append_sheet(wb, ws3, '📝 Manual Entry Guide');
+
+  // ── Sheet 4: Compare ─────────────────────────────────────
+  const compareParams = [
+    'PG Name','Gender','Locality',
+    'Single Rent (₹/mo)','Double Rent (₹/mo)','Triple Rent (₹/mo)',
+    'Security Deposit (₹)','Maintenance (₹/mo)','Electricity','WiFi',
+    'Food','Food Charge (₹/mo)',
+    'Laundry','Housekeeping','Lift','Parking','Drinking Water','CCTV','AC Rooms','Gym','Power Backup',
+    'Avg Review Score /10','Food Quality','Cleanliness','Phone'
+  ];
+  const top4 = [...DB].sort((a,b)=>avgScore(b)-avgScore(a)).slice(0,4);
+  const compareData = [
+    ['SIDE-BY-SIDE PG COMPARISON'],
+    ['Parameter','PG 1','PG 2','PG 3','PG 4'],
+    ...compareParams.map((param,i)=>{
+      const vals = top4.map(pg=>{
+        const map = [
+          pg.name, pg.gender, (pg.addr||'').split(',').slice(-3,-1).join(',').trim(),
+          pg.r1?'₹'+fmt(pg.r1):'—', pg.r2?'₹'+fmt(pg.r2):'—', pg.r3?'₹'+fmt(pg.r3):'—',
+          pg.deposit?'₹'+fmt(pg.deposit):'—', pg.maint?'₹'+fmt(pg.maint)+'/mo':'None',
+          pg.elec||'—', pg.wifi||'—', pg.food||'—', pg.foodAmt?'₹'+fmt(pg.foodAmt):'—',
+          pg.laundry?'✓ Yes':'✗ No',pg.hk?'✓ Yes':'✗ No',pg.lift?'✓ Yes':'✗ No',
+          pg.parking?'✓ Yes':'✗ No',pg.water?'✓ Yes':'✗ No',pg.cctv?'✓ Yes':'✗ No',
+          pg.ac?'✓ Yes':'✗ No',pg.gym?'✓ Yes':'✗ No',pg.power?'✓ Yes':'✗ No',
+          avgScore(pg)?avgScore(pg)+'/10':'—', pg.foodQ?pg.foodQ.substring(0,60):'—',
+          pg.clean?pg.clean.substring(0,60):'—', pg.phone||'—'
+        ];
+        return map[i]||'—';
+      });
+      return [param, ...vals, ...Array(4-top4.length).fill('—')];
+    }),
+    [],['→ Auto-filled with top 4 rated PGs. Paste any PG data to compare manually.']
+  ];
+  const ws4 = XLSX.utils.aoa_to_sheet(compareData);
+  ws4['!cols'] = [{wch:22},{wch:20},{wch:20},{wch:20},{wch:20}];
+  ws4['!merges'] = [{s:{r:0,c:0},e:{r:0,c:4}}];
+  XLSX.utils.book_append_sheet(wb, ws4, '🔍 Compare PGs');
+
+  // Write and return as blob
+  const wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+  return new Blob([wbout], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+}
+
+function exportXLSX() {
+  if (!window.XLSX) {
+    toast('Loading Excel library...','ok');
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    script.onload = () => { doExportXLSX(); };
+    document.head.appendChild(script);
+  } else {
+    doExportXLSX();
+  }
+}
+
+function doExportXLSX() {
+  if (!DB.length) { toast('No data to export','err'); return; }
+  const blob = buildXLSX();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'PG_Finder_Bengaluru.xlsx';
+  a.click(); URL.revokeObjectURL(url);
+  toast('Excel downloaded!', 'ok');
+}
+
+function exportJSON() {
+  if (!DB.length) { toast('No data to export','err'); return; }
+  dl('PG_Finder_Backup.json', 'application/json', JSON.stringify(DB, null, 2));
+  toast('JSON downloaded', 'ok');
+}
+function importJSON(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      const arr = Array.isArray(data) ? data : (data.pgs || []);
+      const existing = new Set(DB.map(p=>p.id));
+      let added = 0;
+      arr.forEach(pg => { if (!existing.has(pg.id)) { DB.push(pg); added++; } });
+      saveDB(DB); renderPGList();
+      toast(`Imported ${added} new PGs`, 'ok');
+    } catch(e) { toast('Invalid JSON file','err'); }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+// ── Utilities ─────────────────────────────────────────────────
+function closeModal(id) { document.getElementById(id).style.display='none'; }
+function openLB(src)    { document.getElementById('lb-img').src=src; document.getElementById('lb').classList.add('show'); }
+function closeLB()      { document.getElementById('lb').classList.remove('show'); }
+function dl(name, mime, content) {
+  const a = document.createElement('a');
+  const blob = content instanceof Blob ? content : new Blob([content], {type:mime});
+  a.href = URL.createObjectURL(blob);
+  a.download = name; a.click();
+}
+
+// ── Auto-check session ────────────────────────────────────────
+(function() {
+  const s = getSession();
+  if (s) {
+    sess = s;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('main-app').style.display = 'block';
+    document.getElementById('user-chip').textContent = '👤 ' + s.username;
+    if (s.isAdmin) document.getElementById('tab-admin').style.display = 'flex';
+    loadCfgUI();
+    init();
+  }
+})();
+</script>
+</body>
+</html>

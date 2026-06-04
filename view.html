@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Browse PGs — Bengaluru</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="topbar">
+  <a href="index.html" class="brand"><div class="brand-dot"></div>PG Finder BLR</a>
+  <div class="topbar-right">
+    <div class="sync-pill"><div class="sdot" id="sdot"></div><span id="slbl">Local</span></div>
+    <a href="manage.html" class="btn btn-sm btn-green">⚙️ Manage</a>
+  </div>
+</div>
+
+<div class="wrap">
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat"><div class="n" id="s-total">0</div><div class="l">Total PGs</div></div>
+    <div class="stat"><div class="n" id="s-rent">—</div><div class="l">Avg Single Rent</div></div>
+    <div class="stat"><div class="n" id="s-score">—</div><div class="l">Avg Review Score</div></div>
+    <div class="stat"><div class="n" id="s-food">0</div><div class="l">PGs with Food</div></div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('browse')" id="tab-browse">🏠 Browse PGs</button>
+    <button class="tab" onclick="switchTab('compare')" id="tab-compare">📊 Compare</button>
+    <button class="tab" onclick="switchTab('distance')" id="tab-distance">📍 By Distance</button>
+    <button class="tab" onclick="switchTab('summary')" id="tab-summary">📈 Summary</button>
+  </div>
+
+  <!-- BROWSE TAB -->
+  <div id="pane-browse">
+    <div class="sbar">
+      <input id="q" placeholder="🔍 Search name, area, locality..." oninput="renderCards()">
+      <select id="ff" onchange="renderCards()"><option value="">Any food</option><option value="yes">With food</option><option value="no">No food</option></select>
+      <select id="gf" onchange="renderCards()"><option value="">Any gender</option><option value="Male">Male</option><option value="Female">Female</option><option value="Co-ed">Co-ed</option></select>
+      <select id="sf" onchange="renderCards()"><option value="name">Sort: Name</option><option value="rent">Rent ↑</option><option value="score">Score ↓</option></select>
+      <button class="btn btn-sm" id="filter-toggle-btn" onclick="toggleFilters()">⚙️ Filters</button>
+      <button class="btn btn-sm btn-red" id="filter-clear-btn" onclick="clearFilters()" style="display:none">✕ Clear filters</button>
+    </div>
+
+    <div id="filter-panel" style="display:none;background:var(--white);border:1px solid var(--gray-3);border-radius:var(--radius-lg);padding:16px;margin-bottom:14px">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
+        <div class="fg">
+          <label>Max single rent ₹</label>
+          <input type="number" id="filt-rent" placeholder="e.g. 12000" oninput="renderCards();updateFilterBtn()">
+        </div>
+        <div class="fg">
+          <label>Min review score (0–10)</label>
+          <input type="number" id="filt-score" placeholder="e.g. 7" min="0" max="10" step="0.5" oninput="renderCards();updateFilterBtn()">
+        </div>
+        <div class="fg">
+          <label>Must-have amenity</label>
+          <select id="filt-amen" onchange="renderCards();updateFilterBtn()">
+            <option value="">Any amenity</option>
+            <option value="laundry">Laundry</option>
+            <option value="hk">Housekeeping</option>
+            <option value="lift">Lift</option>
+            <option value="parking">Parking</option>
+            <option value="water">Drinking Water</option>
+            <option value="cctv">CCTV</option>
+            <option value="ac">AC Rooms</option>
+            <option value="gym">Gym</option>
+            <option value="power">Power Backup</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+        <div class="fg">
+          <label>Max deposit ₹</label>
+          <input type="number" id="filt-deposit" placeholder="e.g. 20000" oninput="renderCards();updateFilterBtn()">
+        </div>
+        <div class="fg">
+          <label>WiFi</label>
+          <select id="filt-wifi" onchange="renderCards();updateFilterBtn()">
+            <option value="">Any WiFi</option>
+            <option value="Included in rent">Included in rent</option>
+            <option value="Separate charge">Separate charge</option>
+            <option value="Not available">Not available</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Electricity</label>
+          <select id="filt-elec" onchange="renderCards();updateFilterBtn()">
+            <option value="">Any</option>
+            <option value="Included in rent">Included in rent</option>
+            <option value="Per unit metered">Per unit metered</option>
+            <option value="Fixed monthly">Fixed monthly</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--gray-3);display:flex;align-items:center;gap:8px">
+        <div id="filter-summary" style="font-size:12px;color:var(--g);font-weight:600;flex:1"></div>
+        <button class="btn btn-sm" onclick="clearFilters()">✕ Clear all filters</button>
+      </div>
+    </div>
+    <div id="detail-box"></div>
+    <div class="pg-grid" id="grid"></div>
+  </div>
+
+  <!-- COMPARE TAB -->
+  <div id="pane-compare" style="display:none">
+    <div style="background:var(--white);border:1px solid var(--gray-3);border-radius:var(--radius-xl);padding:20px;margin-bottom:16px;box-shadow:var(--shadow)">
+      <div style="font-size:14px;font-weight:600;margin-bottom:14px">Select up to 4 PGs to compare</div>
+      <div id="compare-selector" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px"></div>
+      <button class="btn btn-green" onclick="renderCompare()">📊 Compare Selected</button>
+      <button class="btn btn-sm" style="margin-left:6px" onclick="clearCompare()">✕ Clear</button>
+    </div>
+    <div id="compare-result"></div>
+  </div>
+
+  <!-- DISTANCE TAB -->
+  <div id="pane-distance" style="display:none">
+    <div style="background:var(--white);border:1px solid var(--gray-3);border-radius:var(--radius-xl);padding:20px;margin-bottom:16px;box-shadow:var(--shadow)">
+      <div style="font-size:14px;font-weight:600;margin-bottom:8px">📍 Find PGs nearest to your location</div>
+      <div style="font-size:12px;color:var(--gray-6);margin-bottom:14px">Enter an address, area name, or paste a Google Maps link</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <input id="loc-input" placeholder="e.g. MG Road Bengaluru  or  https://maps.google.com/?q=12.97,77.59" style="flex:1;min-width:240px;padding:9px 12px;border-radius:var(--radius);border:1px solid var(--gray-3);font-size:13px;font-family:inherit">
+        <button class="btn btn-green" onclick="calcDistances()">📐 Calculate Distances</button>
+        <button class="btn btn-sm" onclick="useMyLocation()">📱 Use My Location</button>
+      </div>
+      <div id="dist-status" style="font-size:12px;color:var(--gray-6);margin-top:8px"></div>
+    </div>
+    <div id="dist-results"></div>
+  </div>
+
+  <!-- SUMMARY TAB -->
+  <div id="pane-summary" style="display:none">
+    <div id="summary-content"></div>
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div class="lb" id="lb" onclick="closeLB()">
+  <button class="lb-close" onclick="closeLB()">✕</button>
+  <img id="lb-img" src="" alt="">
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="db.js"></script>
+<script>
+let DB = [], selectedForCompare = new Set();
+
+// ── Init ─────────────────────────────────────────────────────
+async function init() {
+  const cloud = await loadFromCloud();
+  DB = cloud || getDB();
+  if (cloud) { document.getElementById('sdot').className='sdot ok'; document.getElementById('slbl').textContent='Synced'; }
+  renderAll();
+}
+
+function renderAll() {
+  updateStats();
+  renderCards();
+  renderCompareSelector();
+  renderSummary();
+}
+
+// ── Stats ────────────────────────────────────────────────────
+function updateStats() {
+  document.getElementById('s-total').textContent = DB.length;
+  const rents = DB.map(p=>p.r1).filter(r=>r>0);
+  document.getElementById('s-rent').textContent = rents.length ? '₹'+Math.round(rents.reduce((a,b)=>a+b,0)/rents.length).toLocaleString('en-IN') : '—';
+  const scores = DB.map(p=>avgScore(p)).filter(s=>s>0);
+  document.getElementById('s-score').textContent = scores.length ? (scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1)+'/10' : '—';
+  document.getElementById('s-food').textContent = DB.filter(p=>p.food&&p.food.includes('Included')).length;
+}
+
+// ── Tab switcher ─────────────────────────────────────────────
+function switchTab(t) {
+  ['browse','compare','distance','summary'].forEach(id=>{
+    document.getElementById('pane-'+id).style.display = id===t?'block':'none';
+    document.getElementById('tab-'+id).classList.toggle('active', id===t);
+  });
+  if (t==='summary') renderSummary();
+  if (t==='compare') renderCompareSelector();
+}
+
+// ── Render cards ──────────────────────────────────────────────
+// ── Filter panel toggle ──────────────────────────────────────
+function toggleFilters() {
+  const panel = document.getElementById('filter-panel');
+  const btn   = document.getElementById('filter-toggle-btn');
+  const open  = panel.style.display === 'none' || panel.style.display === '';
+  panel.style.display = open ? 'block' : 'none';
+  btn.style.background   = open ? 'var(--gm)' : '';
+  btn.style.color        = open ? '#fff'       : '';
+  btn.style.borderColor  = open ? 'var(--gm)'  : '';
+  btn.textContent        = open ? '⚙️ Filters ▲' : '⚙️ Filters';
+}
+
+function clearFilters() {
+  ['filt-rent','filt-score','filt-deposit'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  ['filt-amen','filt-wifi','filt-elec'].forEach(id  => { const el=document.getElementById(id); if(el) el.selectedIndex=0; });
+  updateFilterBtn();
+  renderCards();
+}
+
+function getActiveFilters() {
+  return {
+    rent    : parseFloat(document.getElementById('filt-rent')?.value)    || 0,
+    score   : parseFloat(document.getElementById('filt-score')?.value)   || 0,
+    deposit : parseFloat(document.getElementById('filt-deposit')?.value) || 0,
+    amen    : document.getElementById('filt-amen')?.value  || '',
+    wifi    : document.getElementById('filt-wifi')?.value  || '',
+    elec    : document.getElementById('filt-elec')?.value  || '',
+  };
+}
+
+function updateFilterBtn() {
+  const f = getActiveFilters();
+  const active = f.rent || f.score || f.deposit || f.amen || f.wifi || f.elec;
+  const clearBtn = document.getElementById('filter-clear-btn');
+  if (clearBtn) clearBtn.style.display = active ? 'inline-flex' : 'none';
+
+  const parts = [];
+  if (f.rent)    parts.push(`Rent ≤ ₹${Number(f.rent).toLocaleString('en-IN')}`);
+  if (f.score)   parts.push(`Score ≥ ${f.score}`);
+  if (f.deposit) parts.push(`Deposit ≤ ₹${Number(f.deposit).toLocaleString('en-IN')}`);
+  if (f.amen)    parts.push(f.amen.charAt(0).toUpperCase()+f.amen.slice(1));
+  if (f.wifi)    parts.push('WiFi: '+f.wifi);
+  if (f.elec)    parts.push('Electricity: '+f.elec);
+
+  const summary = document.getElementById('filter-summary');
+  if (summary) {
+    summary.textContent = parts.length
+      ? `✅ Active: ${parts.join(' · ')}  (${document.querySelectorAll('#grid .pg-card').length} results)`
+      : '';
+  }
+}
+
+function renderCards() {
+  const q   = document.getElementById('q').value.toLowerCase().trim();
+  const ff  = document.getElementById('ff').value;
+  const gf  = document.getElementById('gf').value;
+  const sf  = document.getElementById('sf').value;
+  const f   = getActiveFilters();
+
+  let list = DB.filter(pg => {
+    // Text search — name OR address
+    if (q && !pg.name.toLowerCase().includes(q) && !(pg.addr||'').toLowerCase().includes(q)) return false;
+    // Food filter
+    if (ff==='yes' && !(pg.food||'').includes('Included')) return false;
+    if (ff==='no'  && (pg.food||'').includes('Included'))  return false;
+    // Gender
+    if (gf && pg.gender !== gf) return false;
+    // Max rent
+    if (f.rent && pg.r1 && pg.r1 > f.rent) return false;
+    // PGs with no rent entered are shown unless a strict rent filter is set
+    if (f.rent && !pg.r1) return false;
+    // Min score
+    if (f.score && avgScore(pg) < f.score) return false;
+    // Max deposit
+    if (f.deposit && pg.deposit && pg.deposit > f.deposit) return false;
+    // Must-have amenity
+    if (f.amen && !pg[f.amen]) return false;
+    // WiFi exact match
+    if (f.wifi && pg.wifi !== f.wifi) return false;
+    // Electricity exact match
+    if (f.elec && pg.elec !== f.elec) return false;
+    return true;
+  });
+
+  if (sf==='rent')        list.sort((a,b) => (a.r1||999999)-(b.r1||999999));
+  else if (sf==='score')  list.sort((a,b) => avgScore(b)-avgScore(a));
+  else                    list.sort((a,b) => a.name.localeCompare(b.name));
+
+  const grid = document.getElementById('grid');
+  if (!list.length) {
+    const hasFilters = q || ff || gf || f.rent || f.score || f.deposit || f.amen || f.wifi || f.elec;
+    grid.innerHTML = `<div class="empty">
+      <span class="empty-icon">🔍</span>
+      ${DB.length
+        ? `No PGs match your ${hasFilters?'filters':'search'}.<br><br>
+           <button class="btn btn-sm btn-green" onclick="clearFilters();document.getElementById('q').value='';renderCards()">Clear all & show all PGs</button>`
+        : 'No PGs in the database yet.'}
+    </div>`;
+    setTimeout(updateFilterBtn, 50);
+    return;
+  }
+  grid.innerHTML = list.map(pg => cardHTML(pg)).join('');
+  setTimeout(updateFilterBtn, 50);
+}
+
+function cardHTML(pg, distKm) {
+  const sc = avgScore(pg);
+  const thumb = (pg.imgs?.infra?.[0]) || (pg.imgs?.amenity?.[0]) || '';
+  const ams = AMENITIES.filter(a=>pg[a.id]);
+  return `<div class="pg-card" onclick="showDetail('${pg.id}')">
+    ${thumb
+      ? `<img class="pg-card-thumb" src="${thumb}" loading="lazy" alt="${pg.name}">`
+      : `<div class="pg-card-thumb-empty">🏠</div>`}
+    <div class="pg-card-body">
+      <div class="pg-card-top">
+        <div class="pg-card-name">${pg.name}</div>
+        ${sc>0?`<div class="score-pill" style="background:${scoreColor(sc)}22;color:${scoreColor(sc)};border:1px solid ${scoreColor(sc)}44">⭐ ${sc}</div>`:''}
+      </div>
+      <div class="pg-card-loc">📍 ${pg.addr||'No address'}</div>
+      ${distKm!=null?`<div class="pg-card-dist">🗺 ${distKm<1?(distKm*1000).toFixed(0)+' m':distKm.toFixed(1)+' km'} away</div>`:''}
+      <div class="tag-row">
+        ${pg.gender?`<span class="tag">${pg.gender}</span>`:''}
+        ${ams.slice(0,4).map(a=>`<span class="tag">${a.label}</span>`).join('')}
+        ${ams.length>4?`<span class="tag">+${ams.length-4}</span>`:''}
+      </div>
+      <div class="rent-row">
+        ${pg.r1?`<span class="rent-pill">Single ₹${fmt(pg.r1)}</span>`:''}
+        ${pg.r2?`<span class="rent-pill">Double ₹${fmt(pg.r2)}</span>`:''}
+        ${pg.r3?`<span class="rent-pill">Triple ₹${fmt(pg.r3)}</span>`:''}
+      </div>
+      <div class="pg-card-foot">
+        <div class="pg-card-contact">${pg.phone||pg.email||'No contact'}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── Detail view ───────────────────────────────────────────────
+function showDetail(id) {
+  const pg = DB.find(p=>p.id===id); if(!pg) return;
+  const sc = avgScore(pg);
+  const imgs = pg.imgs||{};
+  const heroImg = imgs.infra?.[0]||imgs.amenity?.[0]||imgs.food?.[0]||'';
+
+  const photoSection = (arr, emptyLabel) => {
+    if (!arr||!arr.length) return `<div class="photo-grid"><div class="photo-empty">📷<div style="font-size:11px;margin-top:4px;color:var(--gray-4)">${emptyLabel}</div></div></div>`;
+    return `<div class="photo-grid">${arr.map(s=>`<img class="photo-thumb" src="${s}" loading="lazy" onclick="openLB('${s}')" alt="photo">`).join('')}</div>`;
+  };
+
+  document.getElementById('detail-box').innerHTML = `
+  <div class="detail">
+    ${heroImg?`<div class="detail-hero"><img class="detail-hero-img" src="${heroImg}" alt="${pg.name}"></div>`:`<div class="detail-hero-empty">🏠</div>`}
+    <div class="detail-hdr">
+      <div>
+        <div style="font-size:20px;font-weight:700;color:var(--g)">${pg.name}</div>
+        <div style="font-size:13px;color:var(--gray-6);margin-top:3px">${pg.addr||''}${pg.gender?' · '+pg.gender:''}</div>
+        ${pg.mapLink?`<a href="${pg.mapLink}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;margin-top:8px;padding:5px 12px;background:var(--gl);color:var(--g);border-radius:20px;font-size:12px;font-weight:600;text-decoration:none">🗺 Open in Google Maps</a>`:''}
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        ${sc>0?`<div class="score-pill" style="font-size:15px;padding:6px 14px;background:${scoreColor(sc)}22;color:${scoreColor(sc)};border:1px solid ${scoreColor(sc)}44">⭐ ${sc}/10</div>`:''}
+        <button class="btn btn-sm" onclick="document.getElementById('detail-box').innerHTML=''">✕ Close</button>
+      </div>
+    </div>
+    <div class="detail-body">
+      <div class="dsec">
+        <div class="dsec-title">Contact</div>
+        <div class="dg">
+          ${pg.owner?`<div class="di"><div class="dl">Owner / Manager</div><div class="dv">${pg.owner}</div></div>`:''}
+          ${pg.phone?`<div class="di"><div class="dl">Phone</div><div class="dv"><a href="tel:${pg.phone}" style="color:var(--g)">${pg.phone}</a></div></div>`:''}
+          ${pg.email?`<div class="di"><div class="dl">Email</div><div class="dv"><a href="mailto:${pg.email}" style="color:var(--b)">${pg.email}</a></div></div>`:''}
+        </div>
+      </div>
+      <div class="dsec">
+        <div class="dsec-title">Rent & Charges</div>
+        <div class="dg">
+          ${pg.r1?`<div class="di"><div class="dl">Single Bed</div><div class="dv" style="color:var(--g)">₹${fmt(pg.r1)}/mo</div></div>`:''}
+          ${pg.r2?`<div class="di"><div class="dl">Double Sharing</div><div class="dv" style="color:var(--g)">₹${fmt(pg.r2)}/mo</div></div>`:''}
+          ${pg.r3?`<div class="di"><div class="dl">Triple Sharing</div><div class="dv" style="color:var(--g)">₹${fmt(pg.r3)}/mo</div></div>`:''}
+          ${pg.deposit?`<div class="di"><div class="dl">Security Deposit</div><div class="dv">₹${fmt(pg.deposit)}</div></div>`:''}
+          ${pg.maint?`<div class="di"><div class="dl">Maintenance</div><div class="dv">₹${fmt(pg.maint)}/mo</div></div>`:''}
+          ${pg.elec?`<div class="di"><div class="dl">Electricity</div><div class="dv">${pg.elec}</div></div>`:''}
+          ${pg.food?`<div class="di"><div class="dl">Food</div><div class="dv">${pg.food}${pg.foodAmt?` · ₹${fmt(pg.foodAmt)}/mo`:''}</div></div>`:''}
+          ${pg.wifi?`<div class="di"><div class="dl">WiFi</div><div class="dv">${pg.wifi}</div></div>`:''}
+        </div>
+      </div>
+      <div class="dsec">
+        <div class="dsec-title">Amenities</div>
+        <div class="am-row">
+          ${AMENITIES.map(a=>`<div class="am ${pg[a.id]?'yes':'no'}">${a.icon} ${a.label}</div>`).join('')}
+        </div>
+        ${photoSection(imgs.amenity,'Amenity photos — to be added')}
+      </div>
+      <div class="dsec">
+        <div class="dsec-title">Food Quality</div>
+        ${pg.foodQ?`<p style="font-size:13px;color:var(--gray-6);line-height:1.7;margin-bottom:10px">${pg.foodQ}</p>`:'<p style="font-size:12px;color:var(--gray-4);margin-bottom:8px">No notes added</p>'}
+        ${photoSection(imgs.food,'Food photos — to be added')}
+      </div>
+      <div class="dsec">
+        <div class="dsec-title">Cleanliness & Infrastructure</div>
+        ${pg.clean?`<p style="font-size:13px;color:var(--gray-6);line-height:1.7;margin-bottom:10px">${pg.clean}</p>`:'<p style="font-size:12px;color:var(--gray-4);margin-bottom:8px">No notes added</p>'}
+        ${photoSection(imgs.infra,'Infrastructure photos — to be added')}
+      </div>
+      ${pg.reviews&&pg.reviews.length?`<div class="dsec">
+        <div class="dsec-title">Resident Reviews (${pg.reviews.length})</div>
+        ${pg.reviews.map(r=>`<div class="rev"><span class="rev-score">⭐ ${r.score}/10</span><div class="rev-txt">${r.text}</div></div>`).join('')}
+      </div>`:''}
+    </div>
+  </div>`;
+  document.getElementById('detail-box').scrollIntoView({behavior:'smooth'});
+}
+
+// ── Compare ───────────────────────────────────────────────────
+function renderCompareSelector() {
+  const sel = document.getElementById('compare-selector');
+  sel.innerHTML = DB.map(pg=>`
+    <label style="display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;border:1px solid ${selectedForCompare.has(pg.id)?'var(--gm)':'var(--gray-3)'};background:${selectedForCompare.has(pg.id)?'var(--gl)':'var(--white)'};cursor:pointer;font-size:13px;font-weight:500;transition:all .15s">
+      <input type="checkbox" ${selectedForCompare.has(pg.id)?'checked':''} onchange="toggleCompare('${pg.id}',this)" style="accent-color:var(--gm)">
+      ${pg.name}
+    </label>`).join('');
+}
+
+function toggleCompare(id, cb) {
+  if (cb.checked) {
+    if (selectedForCompare.size >= 4) { cb.checked=false; toast('Max 4 PGs can be compared','err'); return; }
+    selectedForCompare.add(id);
+  } else {
+    selectedForCompare.delete(id);
+  }
+  renderCompareSelector();
+}
+function clearCompare() { selectedForCompare.clear(); renderCompareSelector(); document.getElementById('compare-result').innerHTML=''; }
+
+function renderCompare() {
+  const ids = [...selectedForCompare];
+  if (ids.length < 2) { toast('Select at least 2 PGs','err'); return; }
+  const pgs = ids.map(id=>DB.find(p=>p.id===id)).filter(Boolean);
+
+  const rows = [
+    {sec:'Basic',label:'PG Name',       val:pg=>pg.name},
+    {label:'Gender',        val:pg=>pg.gender||'—'},
+    {label:'Locality',      val:pg=>(pg.addr||'').split(',').slice(-3,-1).join(',').trim()||'—'},
+    {sec:'Rent',label:'Single Bed ₹/mo',  val:pg=>pg.r1?`₹${fmt(pg.r1)}`:'—', best:'min', num:pg=>pg.r1||0},
+    {label:'Double ₹/mo',  val:pg=>pg.r2?`₹${fmt(pg.r2)}`:'—', best:'min', num:pg=>pg.r2||0},
+    {label:'Triple ₹/mo',  val:pg=>pg.r3?`₹${fmt(pg.r3)}`:'—', best:'min', num:pg=>pg.r3||0},
+    {label:'Security Dep.', val:pg=>pg.deposit?`₹${fmt(pg.deposit)}`:'—', best:'min', num:pg=>pg.deposit||0},
+    {label:'Maintenance',   val:pg=>pg.maint?`₹${fmt(pg.maint)}/mo`:'None', best:'min', num:pg=>pg.maint||0},
+    {sec:'Charges',label:'Electricity',  val:pg=>pg.elec||'—'},
+    {label:'Food',          val:pg=>pg.food||'—'},
+    {label:'Food Charge',   val:pg=>pg.foodAmt?`₹${fmt(pg.foodAmt)}/mo`:'—', best:'min', num:pg=>pg.foodAmt||0},
+    {label:'WiFi',          val:pg=>pg.wifi||'—'},
+    {sec:'Amenities',label:'Laundry',   val:pg=>yn(pg.laundry)},
+    {label:'Housekeeping',  val:pg=>yn(pg.hk)},
+    {label:'Lift',          val:pg=>yn(pg.lift)},
+    {label:'Parking',       val:pg=>yn(pg.parking)},
+    {label:'Drinking Water',val:pg=>yn(pg.water)},
+    {label:'CCTV',          val:pg=>yn(pg.cctv)},
+    {label:'AC Rooms',      val:pg=>yn(pg.ac)},
+    {label:'Gym',           val:pg=>yn(pg.gym)},
+    {label:'Power Backup',  val:pg=>yn(pg.power)},
+    {sec:'Reviews',label:'Avg Score /10',val:pg=>avgScore(pg)?avgScore(pg)+'/10':'—', best:'max', num:pg=>avgScore(pg)},
+    {label:'Review Count',  val:pg=>(pg.reviews||[]).length||'—'},
+    {label:'Food Quality',  val:pg=>pg.foodQ?pg.foodQ.substring(0,80)+'…':'—'},
+    {label:'Cleanliness',   val:pg=>pg.clean?pg.clean.substring(0,80)+'…':'—'},
+    {sec:'Contact',label:'Phone', val:pg=>pg.phone||'—'},
+  ];
+
+  const yn = v => v ? `<span class="yes-cell">✓ Yes</span>` : `<span class="no-cell">✗ No</span>`;
+
+  let html = `<div style="overflow-x:auto;background:var(--white);border:1px solid var(--gray-3);border-radius:var(--radius-xl);box-shadow:var(--shadow)">
+  <table class="compare-table">
+  <thead><tr><th>Parameter</th>${pgs.map(pg=>`<th>${pg.name}<br><span style="font-weight:400;font-size:11px">${pg.gender||''}</span></th>`).join('')}</tr></thead>
+  <tbody>`;
+
+  for (const row of rows) {
+    if (row.sec) {
+      html += `<tr class="compare-section-row"><td colspan="${pgs.length+1}">${row.sec}</td></tr>`;
+    }
+    const vals = pgs.map(pg => row.val(pg));
+    let bestIdx = -1;
+    if (row.best && row.num) {
+      const nums = pgs.map(pg => row.num(pg));
+      const validNums = nums.filter(n=>n>0);
+      if (validNums.length) {
+        const target = row.best==='min' ? Math.min(...validNums) : Math.max(...validNums);
+        bestIdx = nums.indexOf(target);
+      }
+    }
+    html += `<tr><td>${row.label}</td>`;
+    vals.forEach((v,i)=>{
+      const isBest = i===bestIdx;
+      html += `<td class="${isBest?'best-cell':''}">${v}</td>`;
+    });
+    html += `</tr>`;
+  }
+
+  html += `</tbody></table></div>
+  <div style="font-size:12px;color:var(--gray-6);margin-top:10px;padding:0 4px">
+    🟢 Green highlighted cells = best value in that row
+  </div>`;
+  document.getElementById('compare-result').innerHTML = html;
+}
+
+// ── Distance ──────────────────────────────────────────────────
+let targetCoords = null;
+async function calcDistances() {
+  const input = document.getElementById('loc-input').value.trim();
+  if (!input) { toast('Enter a location','err'); return; }
+  const status = document.getElementById('dist-status');
+  status.textContent = '⏳ Locating...';
+  const coords = await geocodeAddress(input);
+  if (!coords) { status.textContent = '❌ Could not find location. Try a more specific address.'; return; }
+  targetCoords = coords;
+  status.textContent = `✅ Target: ${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`;
+  renderDistResults(coords);
+}
+
+async function useMyLocation() {
+  if (!navigator.geolocation) { toast('Geolocation not supported','err'); return; }
+  document.getElementById('dist-status').textContent = '⏳ Getting your location...';
+  navigator.geolocation.getCurrentPosition(pos => {
+    targetCoords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+    document.getElementById('dist-status').textContent = `✅ Using your current location`;
+    document.getElementById('loc-input').value = `${targetCoords.lat.toFixed(5)}, ${targetCoords.lon.toFixed(5)}`;
+    renderDistResults(targetCoords);
+  }, err => {
+    document.getElementById('dist-status').textContent = '❌ Could not get your location. Please enter manually.';
+  });
+}
+
+async function renderDistResults(target) {
+  const res = document.getElementById('dist-results');
+  res.innerHTML = `<div class="loader"><div class="spin"></div>Calculating distances...</div>`;
+
+  const withDist = [];
+  for (const pg of DB) {
+    const coords = await getPGCoords(pg);
+    if (coords) {
+      withDist.push({ pg, dist: haversineKm(target.lat, target.lon, coords.lat, coords.lon) });
+    } else {
+      withDist.push({ pg, dist: null });
+    }
+  }
+  withDist.sort((a,b) => {
+    if (a.dist===null) return 1;
+    if (b.dist===null) return -1;
+    return a.dist - b.dist;
+  });
+
+  res.innerHTML = `
+    <div style="font-size:13px;font-weight:600;color:var(--gray-7);margin-bottom:14px">
+      ${withDist.filter(x=>x.dist!==null).length} PGs found with distance data, sorted nearest first
+    </div>
+    <div class="pg-grid">
+      ${withDist.map(({pg,dist}) => cardHTML(pg, dist)).join('')}
+    </div>`;
+
+  // Re-bind click handlers
+  document.querySelectorAll('#dist-results .pg-card').forEach(card => {
+    card.onclick = () => {
+      switchTab('browse');
+      showDetail(card.querySelector('.pg-card-name') ? DB.find(p=>p.name===card.querySelector('.pg-card-name').textContent)?.id : null);
+    };
+  });
+}
+
+// ── Summary ────────────────────────────────────────────────────
+function renderSummary() {
+  if (!DB.length) { document.getElementById('summary-content').innerHTML='<div class="empty"><span class="empty-icon">📊</span>No data yet.</div>'; return; }
+
+  const allRents = DB.map(p=>p.r1).filter(r=>r>0);
+  const allScores = DB.map(p=>avgScore(p)).filter(s=>s>0);
+  const amenStats = AMENITIES.map(a => ({
+    label: a.label, icon: a.icon,
+    count: DB.filter(p=>p[a.id]).length,
+    pct: Math.round(DB.filter(p=>p[a.id]).length/DB.length*100)
+  }));
+  amenStats.sort((a,b)=>b.count-a.count);
+
+  const topRated = [...DB].filter(p=>avgScore(p)>0).sort((a,b)=>avgScore(b)-avgScore(a)).slice(0,3);
+  const cheapest = [...DB].filter(p=>p.r1>0).sort((a,b)=>a.r1-b.r1).slice(0,3);
+  const genderDist = {Male:0,Female:0,'Co-ed':0};
+  DB.forEach(p=>{ if(genderDist[p.gender]!==undefined) genderDist[p.gender]++; });
+
+  document.getElementById('summary-content').innerHTML = `
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+
+    <div style="background:var(--white);border:1px solid var(--gray-3);border-radius:var(--radius-xl);padding:20px;box-shadow:var(--shadow)">
+      <div style="font-size:14px;font-weight:700;margin-bottom:16px;border-bottom:1px solid var(--gray-3);padding-bottom:10px">📊 Key Statistics</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--gray-6)">Total PGs</span><strong>${DB.length}</strong></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--gray-6)">Avg Single Rent</span><strong style="color:var(--g)">₹${allRents.length?Math.round(allRents.reduce((a,b)=>a+b,0)/allRents.length).toLocaleString('en-IN'):'—'}</strong></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--gray-6)">Min Single Rent</span><strong>₹${allRents.length?Math.min(...allRents).toLocaleString('en-IN'):'—'}</strong></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--gray-6)">Max Single Rent</span><strong>₹${allRents.length?Math.max(...allRents).toLocaleString('en-IN'):'—'}</strong></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--gray-6)">Avg Review Score</span><strong style="color:var(--am)">${allScores.length?(allScores.reduce((a,b)=>a+b,0)/allScores.length).toFixed(1)+'/10':'—'}</strong></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--gray-6)">PGs with Food</span><strong>${DB.filter(p=>(p.food||'').includes('Included')).length}</strong></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--gray-6)">Male / Female / Co-ed</span><strong>${genderDist.Male} / ${genderDist.Female} / ${genderDist['Co-ed']}</strong></div>
+      </div>
+    </div>
+
+    <div style="background:var(--white);border:1px solid var(--gray-3);border-radius:var(--radius-xl);padding:20px;box-shadow:var(--shadow)">
+      <div style="font-size:14px;font-weight:700;margin-bottom:16px;border-bottom:1px solid var(--gray-3);padding-bottom:10px">🏆 Top Rated PGs</div>
+      ${topRated.map((pg,i)=>`
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;${i<topRated.length-1?'border-bottom:1px solid var(--gray-3)':''}" onclick="switchTab('browse');showDetail('${pg.id}')" style="cursor:pointer">
+          <div style="width:28px;height:28px;border-radius:50%;background:${i===0?'#FFD700':i===1?'#C0C0C0':'#CD7F32'};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:${i===0?'#7A5200':'#4A4A4A'};flex-shrink:0">${i+1}</div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:600">${pg.name}</div>
+            <div style="font-size:11px;color:var(--gray-6)">${(pg.addr||'').split(',').slice(-3,-1).join(',').trim()}</div>
+          </div>
+          <div style="font-size:14px;font-weight:700;color:${scoreColor(avgScore(pg))}">⭐ ${avgScore(pg)}</div>
+        </div>`).join('')}
+    </div>
+
+    <div style="background:var(--white);border:1px solid var(--gray-3);border-radius:var(--radius-xl);padding:20px;box-shadow:var(--shadow)">
+      <div style="font-size:14px;font-weight:700;margin-bottom:16px;border-bottom:1px solid var(--gray-3);padding-bottom:10px">💰 Most Affordable</div>
+      ${cheapest.map((pg,i)=>`
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;${i<cheapest.length-1?'border-bottom:1px solid var(--gray-3)':''}">
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:600">${pg.name}</div>
+            <div style="font-size:11px;color:var(--gray-6)">${pg.gender} · ${(pg.addr||'').split(',').slice(-3,-1).join(',').trim()}</div>
+          </div>
+          <div style="font-size:14px;font-weight:700;color:var(--g)">₹${fmt(pg.r1)}/mo</div>
+        </div>`).join('')}
+    </div>
+
+    <div style="background:var(--white);border:1px solid var(--gray-3);border-radius:var(--radius-xl);padding:20px;box-shadow:var(--shadow)">
+      <div style="font-size:14px;font-weight:700;margin-bottom:16px;border-bottom:1px solid var(--gray-3);padding-bottom:10px">✅ Amenity Coverage</div>
+      ${amenStats.map(a=>`
+        <div style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+            <span>${a.icon} ${a.label}</span>
+            <span style="font-weight:600;color:${a.pct>=60?'var(--g)':a.pct>=30?'var(--am)':'var(--r)'}">${a.count}/${DB.length} (${a.pct}%)</span>
+          </div>
+          <div style="height:6px;background:var(--gray-2);border-radius:3px;overflow:hidden">
+            <div style="height:100%;width:${a.pct}%;background:${a.pct>=60?'var(--gm)':a.pct>=30?'var(--am)':'var(--r)'};border-radius:3px;transition:width .6s"></div>
+          </div>
+        </div>`).join('')}
+    </div>
+
+  </div>
+
+  <!-- Rent chart -->
+  <div style="background:var(--white);border:1px solid var(--gray-3);border-radius:var(--radius-xl);padding:20px;margin-top:16px;box-shadow:var(--shadow)">
+    <div style="font-size:14px;font-weight:700;margin-bottom:16px;border-bottom:1px solid var(--gray-3);padding-bottom:10px">₹ Rent Overview — All PGs</div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead><tr style="background:var(--g);color:#fff">
+          <th style="padding:10px 14px;text-align:left">PG Name</th>
+          <th style="padding:10px 14px;text-align:center">Gender</th>
+          <th style="padding:10px 14px;text-align:right">Single</th>
+          <th style="padding:10px 14px;text-align:right">Double</th>
+          <th style="padding:10px 14px;text-align:right">Triple</th>
+          <th style="padding:10px 14px;text-align:right">Deposit</th>
+          <th style="padding:10px 14px;text-align:center">Score</th>
+        </tr></thead>
+        <tbody>
+          ${[...DB].sort((a,b)=>a.name.localeCompare(b.name)).map((pg,i)=>{
+            const sc = avgScore(pg);
+            return `<tr style="${i%2?'background:var(--gray-1)':''}">
+              <td style="padding:9px 14px;font-weight:600">${pg.name}</td>
+              <td style="padding:9px 14px;text-align:center"><span class="tag">${pg.gender||'—'}</span></td>
+              <td style="padding:9px 14px;text-align:right;color:var(--g);font-weight:600">${pg.r1?'₹'+fmt(pg.r1):'—'}</td>
+              <td style="padding:9px 14px;text-align:right">${pg.r2?'₹'+fmt(pg.r2):'—'}</td>
+              <td style="padding:9px 14px;text-align:right">${pg.r3?'₹'+fmt(pg.r3):'—'}</td>
+              <td style="padding:9px 14px;text-align:right">${pg.deposit?'₹'+fmt(pg.deposit):'—'}</td>
+              <td style="padding:9px 14px;text-align:center">${sc?`<span style="font-weight:700;color:${scoreColor(sc)}">⭐${sc}</span>`:'—'}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+// ── Lightbox ─────────────────────────────────────────────────
+function openLB(src) { document.getElementById('lb-img').src=src; document.getElementById('lb').classList.add('show'); }
+function closeLB()   { document.getElementById('lb').classList.remove('show'); }
+
+// ── Boot ─────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
