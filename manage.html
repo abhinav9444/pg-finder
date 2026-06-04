@@ -5,7 +5,213 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Manage PGs — Bengaluru</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<style>
+/* ═══ PG Finder — Shared Styles ═══ */
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --g:#0F6E56;--gm:#1D9E75;--gl:#E1F5EE;--gp:#F0FAF6;
+  --b:#185FA5;--bl:#E6F1FB;
+  --am:#BA7517;--al:#FAEEDA;
+  --r:#A32D2D;--rl:#FCEBEB;
+  --gray-9:#111;--gray-8:#1f1f1f;--gray-7:#2C2C2A;--gray-6:#5F5E5A;
+  --gray-4:#9c9a94;--gray-3:#D3D1C7;--gray-2:#EDECEA;--gray-1:#F7F6F3;
+  --white:#fff;
+  --radius:10px;--radius-lg:14px;--radius-xl:18px;
+  --shadow:0 1px 4px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.06);
+  --shadow-lg:0 4px 20px rgba(0,0,0,.12),0 12px 40px rgba(0,0,0,.08);
+}
+body{font-family:'Inter',system-ui,sans-serif;font-size:14px;color:var(--gray-7);background:var(--gray-2);min-height:100vh}
+
+/* ── Topbar ── */
+.topbar{background:var(--white);border-bottom:1px solid var(--gray-3);padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:200;gap:12px;box-shadow:0 1px 0 rgba(0,0,0,.06)}
+.brand{display:flex;align-items:center;gap:9px;font-size:16px;font-weight:700;color:var(--g);text-decoration:none;white-space:nowrap}
+.brand-dot{width:9px;height:9px;border-radius:50%;background:linear-gradient(135deg,var(--gm),var(--g))}
+.back-link{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--gray-6);text-decoration:none;padding:5px 10px;border-radius:8px;border:1px solid var(--gray-3);transition:all .15s}
+.back-link:hover{background:var(--gray-1);color:var(--gray-7)}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.user-chip{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:500;padding:5px 12px;border-radius:20px;background:var(--gl);color:var(--g);border:1px solid rgba(29,158,117,.25)}
+.sync-pill{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--gray-6);padding:4px 10px;border-radius:20px;border:1px solid var(--gray-3)}
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--gray-3)}
+.sdot.ok{background:#22c55e}.sdot.spin{background:#f59e0b;animation:pulse 1s infinite}.sdot.err{background:#ef4444}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ── Wrap ── */
+.wrap{max-width:1100px;margin:0 auto;padding:20px 16px}
+
+/* ── Stats row ── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.stat{background:var(--white);border:1px solid var(--gray-3);border-radius:var(--radius-lg);padding:14px 16px;box-shadow:var(--shadow)}
+.stat .n{font-size:26px;font-weight:700;color:var(--g)}
+.stat .l{font-size:11px;font-weight:500;color:var(--gray-6);margin-top:2px;text-transform:uppercase;letter-spacing:.04em}
+
+/* ── Buttons ── */
+.btn{padding:8px 16px;border-radius:var(--radius);border:1px solid var(--gray-3);background:var(--white);cursor:pointer;font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:6px;transition:all .15s;color:var(--gray-7);font-family:inherit}
+.btn:hover{background:var(--gray-1)}
+.btn:active{transform:scale(.98)}
+.btn-green{background:var(--gm);color:#fff;border-color:var(--gm)}
+.btn-green:hover{background:var(--g)}
+.btn-blue{background:var(--b);color:#fff;border-color:var(--b)}
+.btn-blue:hover{background:#134d88}
+.btn-red{border-color:#fca5a5;color:var(--r)}
+.btn-red:hover{background:var(--rl)}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-icon{padding:6px;width:32px;height:32px;justify-content:center;flex-shrink:0}
+
+/* ── Cards ── */
+.pg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:16px}
+.pg-card{background:var(--white);border:1px solid var(--gray-3);border-radius:var(--radius-xl);overflow:hidden;cursor:pointer;transition:all .2s;box-shadow:var(--shadow)}
+.pg-card:hover{border-color:var(--gm);box-shadow:var(--shadow-lg);transform:translateY(-2px)}
+.pg-card-thumb{width:100%;height:150px;object-fit:cover;background:var(--gray-2)}
+.pg-card-thumb-empty{width:100%;height:150px;background:linear-gradient(135deg,var(--gp),var(--gl));display:flex;align-items:center;justify-content:center;font-size:36px}
+.pg-card-body{padding:14px 16px}
+.pg-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:7px}
+.pg-card-name{font-size:15px;font-weight:700;line-height:1.3}
+.score-pill{display:flex;align-items:center;gap:3px;font-size:12px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.pg-card-loc{font-size:12px;color:var(--gray-6);margin-bottom:9px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.5}
+.pg-card-dist{font-size:11px;color:var(--b);font-weight:600;margin-bottom:9px;display:flex;align-items:center;gap:4px}
+.tag-row{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:9px}
+.tag{font-size:11px;padding:2px 8px;border-radius:20px;background:var(--gray-2);color:var(--gray-6);border:1px solid var(--gray-3)}
+.rent-row{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:9px}
+.rent-pill{background:var(--bl);color:var(--b);padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600}
+.pg-card-foot{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--gray-3);padding-top:10px;margin-top:8px}
+.pg-card-contact{font-size:12px;color:var(--gray-6)}
+.pg-card-actions{display:flex;gap:4px}
+.empty{text-align:center;padding:70px 20px;color:var(--gray-6);grid-column:1/-1}
+.empty-icon{font-size:56px;display:block;margin-bottom:14px}
+
+/* ── Detail panel ── */
+.detail{background:var(--white);border:1px solid var(--gray-3);border-radius:var(--radius-xl);margin-bottom:20px;overflow:hidden;box-shadow:var(--shadow-lg)}
+.detail-hero{position:relative}
+.detail-hero-img{width:100%;height:220px;object-fit:cover}
+.detail-hero-empty{height:120px;background:linear-gradient(135deg,var(--gp),var(--gl));display:flex;align-items:center;justify-content:center;font-size:48px}
+.detail-hdr{padding:18px 20px 12px;border-bottom:1px solid var(--gray-3);display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px}
+.detail-body{padding:20px}
+.dsec{margin-bottom:22px}
+.dsec-title{font-size:11px;font-weight:600;color:var(--gray-6);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--gray-3)}
+.dg{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px}
+.di{background:var(--gray-1);border-radius:9px;padding:10px 12px}
+.di .dl{font-size:11px;color:var(--gray-6);margin-bottom:3px;font-weight:500}
+.di .dv{font-size:14px;font-weight:600}
+.am-row{display:flex;flex-wrap:wrap;gap:6px}
+.am{display:flex;align-items:center;gap:5px;font-size:12px;padding:4px 10px;border-radius:20px;border:1px solid var(--gray-3);font-weight:500}
+.am.yes{background:var(--gl);color:var(--g);border-color:rgba(29,158,117,.3)}
+.am.no{background:var(--rl);color:var(--r);border-color:rgba(163,45,45,.2)}
+.rev{padding:10px 0;border-bottom:1px solid var(--gray-3)}
+.rev:last-child{border:none}
+.rev-score{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;padding:2px 9px;border-radius:20px;margin-bottom:5px;background:var(--al);color:var(--am)}
+.rev-txt{font-size:13px;color:var(--gray-6);line-height:1.5}
+
+/* ── Photo grid ── */
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-top:10px}
+.photo-thumb{width:100%;aspect-ratio:4/3;border-radius:9px;object-fit:cover;cursor:pointer;border:1px solid var(--gray-3);transition:transform .15s}
+.photo-thumb:hover{transform:scale(1.04)}
+.photo-empty{aspect-ratio:4/3;border-radius:9px;border:1.5px dashed var(--gray-3);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:22px;color:var(--gray-3)}
+
+/* ── Form ── */
+.fsec{background:var(--white);border:1px solid var(--gray-3);border-radius:var(--radius-xl);padding:20px;margin-bottom:14px;box-shadow:var(--shadow)}
+.fsec-title{font-size:13px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px;padding-bottom:10px;border-bottom:1px solid var(--gray-3)}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.frow.one{grid-template-columns:1fr}.frow.three{grid-template-columns:1fr 1fr 1fr}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg label{font-size:12px;color:var(--gray-6);font-weight:500}
+.fg input,.fg select,.fg textarea{padding:9px 11px;border-radius:var(--radius);border:1px solid var(--gray-3);background:var(--white);font-size:13px;color:var(--gray-7);font-family:inherit;transition:border .15s}
+.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:var(--gm);box-shadow:0 0 0 3px rgba(29,158,117,.1)}
+.fg textarea{resize:vertical;min-height:72px;line-height:1.5}
+.amen-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ach{display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;padding:9px 11px;border-radius:var(--radius);border:1px solid var(--gray-3);background:var(--white);transition:all .15s;font-weight:500;user-select:none}
+.ach:hover{background:var(--gp);border-color:var(--gm)}
+.ach input{width:15px;height:15px;accent-color:var(--gm);cursor:pointer}
+.ach.checked{background:var(--gl);border-color:rgba(29,158,117,.4)}
+.rev-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.rev-row input{padding:8px 10px;border-radius:var(--radius);border:1px solid var(--gray-3);font-size:13px;font-family:inherit}
+.rev-row .rt{flex:1}.rev-row .rs{width:70px;text-align:center}
+.upzone{border:2px dashed var(--gray-3);border-radius:var(--radius);padding:14px;text-align:center;cursor:pointer;font-size:12px;color:var(--gray-6);transition:all .15s;margin-bottom:8px}
+.upzone:hover{background:var(--gp);border-color:var(--gm);color:var(--g)}
+.prevrow{display:flex;flex-wrap:wrap;gap:6px}
+.previtem{position:relative;width:76px;height:58px}
+.previtem img{width:100%;height:100%;object-fit:cover;border-radius:8px;border:1px solid var(--gray-3)}
+.prm{position:absolute;top:-5px;right:-5px;background:var(--r);color:#fff;border:none;border-radius:50%;width:18px;height:18px;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;font-weight:700}
+.progress-bar{height:3px;background:var(--gray-3);border-radius:2px;margin-top:4px;overflow:hidden;display:none}
+.progress-bar.show{display:block}
+.progress-fill{height:100%;background:var(--gm);border-radius:2px;width:0;transition:width .2s}
+
+/* ── Compare table ── */
+.compare-table{width:100%;border-collapse:collapse;font-size:13px}
+.compare-table th{background:var(--g);color:#fff;padding:10px 14px;font-weight:600;text-align:left;font-size:12px}
+.compare-table th:first-child{width:180px;background:var(--gray-7)}
+.compare-table td{padding:9px 14px;border-bottom:1px solid var(--gray-3);vertical-align:top}
+.compare-table tr:nth-child(even) td{background:var(--gray-1)}
+.compare-table td:first-child{font-weight:500;color:var(--gray-6);font-size:12px}
+.best-cell{background:var(--gl)!important;color:var(--g);font-weight:700}
+.yes-cell{color:var(--g);font-weight:600}.no-cell{color:var(--r)}
+.compare-section-row td{background:var(--gray-7)!important;color:#fff;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;padding:6px 14px}
+
+/* ── Search bar ── */
+.sbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;align-items:center}
+.sbar input,.sbar select{padding:9px 12px;border-radius:var(--radius);border:1px solid var(--gray-3);background:var(--white);font-size:13px;color:var(--gray-7);font-family:inherit;transition:border .15s}
+.sbar input:focus,.sbar select:focus{outline:none;border-color:var(--gm)}
+.sbar input{flex:1;min-width:200px}
+.sbar .divider{width:1px;height:28px;background:var(--gray-3);flex-shrink:0}
+
+/* ── Tabs ── */
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--gray-3);margin-bottom:20px;padding-bottom:0}
+.tab{padding:9px 16px;border-radius:var(--radius) var(--radius) 0 0;border:1px solid transparent;cursor:pointer;font-size:13px;font-weight:500;color:var(--gray-6);transition:all .15s;font-family:inherit;background:transparent;display:flex;align-items:center;gap:6px;margin-bottom:-1px}
+.tab.active{background:var(--white);border-color:var(--gray-3);border-bottom-color:var(--white);color:var(--gray-7)}
+.tab:hover:not(.active){background:var(--gray-1);color:var(--gray-7)}
+
+/* ── Modal ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:var(--white);border-radius:var(--radius-xl);padding:28px;max-width:480px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25);max-height:90vh;overflow-y:auto}
+.modal h2{font-size:20px;font-weight:700;margin-bottom:6px}
+.modal .msub{font-size:13px;color:var(--gray-6);margin-bottom:20px;line-height:1.6}
+
+/* ── Auth ── */
+.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--gray-2);padding:20px}
+.auth-card{background:var(--white);border-radius:var(--radius-xl);padding:36px;max-width:400px;width:100%;box-shadow:var(--shadow-lg);border:1px solid var(--gray-3)}
+.auth-logo{text-align:center;margin-bottom:28px}
+.auth-title{font-size:22px;font-weight:700;margin-bottom:6px;text-align:center}
+.auth-sub{font-size:13px;color:var(--gray-6);text-align:center;margin-bottom:24px}
+.auth-error{background:var(--rl);color:var(--r);border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:16px;display:none}
+
+/* ── Admin user table ── */
+.user-table{width:100%;border-collapse:collapse;font-size:13px}
+.user-table th{background:var(--gray-1);padding:9px 14px;font-weight:600;text-align:left;font-size:12px;color:var(--gray-6);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--gray-3)}
+.user-table td{padding:10px 14px;border-bottom:1px solid var(--gray-3);vertical-align:middle}
+.user-table tr:last-child td{border:none}
+.status-pill{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px}
+.status-active{background:var(--gl);color:var(--g)}
+.status-paused{background:var(--rl);color:var(--r)}
+
+/* ── Lightbox ── */
+.lb{position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:1000;display:none;align-items:center;justify-content:center;flex-direction:column}
+.lb.show{display:flex}
+.lb img{max-width:92vw;max-height:85vh;border-radius:10px;object-fit:contain}
+.lb-close{position:absolute;top:18px;right:22px;color:#fff;font-size:26px;cursor:pointer;background:rgba(255,255,255,.1);border:none;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center}
+
+/* ── Toast ── */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--gray-7);color:#fff;padding:11px 22px;border-radius:30px;font-size:13px;font-weight:500;z-index:2000;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.25)}
+.toast.show{opacity:1}
+.toast.err{background:#991b1b}
+.toast.ok{background:var(--g)}
+
+/* ── Loader ── */
+.loader{display:flex;align-items:center;justify-content:center;padding:60px;flex-direction:column;gap:12px;color:var(--gray-6);font-size:13px}
+.spin{width:28px;height:28px;border:3px solid var(--gray-3);border-top-color:var(--gm);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Distance badge ── */
+.dist-badge{display:inline-flex;align-items:center;gap:4px;background:var(--bl);color:var(--b);font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;border:1px solid rgba(24,95,165,.2)}
+
+/* ── Responsive ── */
+@media(max-width:640px){
+  .stats{grid-template-columns:1fr 1fr}
+  .frow.three,.frow{grid-template-columns:1fr}
+  .amen-grid{grid-template-columns:1fr 1fr}
+  .topbar{height:auto;padding:10px 14px;flex-wrap:wrap}
+  .pg-grid{grid-template-columns:1fr}
+}
+
+</style>
 </head>
 <body>
 
@@ -28,6 +234,11 @@
     </div>
     <button class="btn btn-green" style="width:100%;justify-content:center" onclick="doLogin()">Sign In →</button>
     <div style="margin-top:16px;text-align:center"><a href="view.html" style="font-size:12px;color:var(--gray-6)">← Back to Browse</a></div>
+    <div style="margin-top:20px;background:var(--gray-1);border-radius:10px;padding:12px;font-size:11px;color:var(--gray-6)">
+      <strong>Demo credentials</strong><br>
+      Admin: <code>admin</code> / <code>Admin@123</code><br>
+      User: <code>ravi</code> / <code>Ravi@123</code>
+    </div>
   </div>
 </div>
 
@@ -285,7 +496,231 @@
 <div class="lb" id="lb" onclick="closeLB()"><button class="lb-close" onclick="closeLB()">✕</button><img id="lb-img" src="" alt=""></div>
 <div class="toast" id="toast"></div>
 
-<script src="db.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════════
+//  PG Finder — Shared core (db.js)
+// ═══════════════════════════════════════════════════════════
+
+// ── Config keys ──────────────────────────────────────────────
+const CFG_KEY   = 'pgf_cfg';
+const USERS_KEY = 'pgf_users';
+const DB_KEY    = 'pgf_db';
+const SESS_KEY  = 'pgf_sess';
+
+// ── Amenity definitions ──────────────────────────────────────
+const AMENITIES = [
+  {id:'laundry',   label:'Laundry',        icon:'👕'},
+  {id:'hk',        label:'Housekeeping',   icon:'🧹'},
+  {id:'lift',      label:'Lift',           icon:'🛗'},
+  {id:'parking',   label:'Parking',        icon:'🚗'},
+  {id:'water',     label:'Drinking Water', icon:'💧'},
+  {id:'cctv',      label:'CCTV',           icon:'📹'},
+  {id:'ac',        label:'AC Rooms',       icon:'❄️'},
+  {id:'gym',       label:'Gym',            icon:'🏋️'},
+  {id:'power',     label:'Power Backup',   icon:'🔌'},
+];
+
+// ── Default admin + sample users (first-run seed) ────────────
+function seedUsers() {
+  if (localStorage.getItem(USERS_KEY)) return;
+  const users = [
+    { id:'admin1', username:'admin', password:btoa('Admin@123'), isAdmin:true,  active:true, created:'2025-01-01' },
+    { id:'u1',     username:'ravi',  password:btoa('Ravi@123'),  isAdmin:false, active:true, created:'2025-01-01' },
+    { id:'u2',     username:'meena', password:btoa('Meena@123'), isAdmin:false, active:true, created:'2025-01-01' },
+  ];
+  localStorage.setItem(USERS_KEY, JSON.stringify(users));
+}
+
+// ── Config (JSONBin + Cloudinary) ────────────────────────────
+function getCfg()       { try{return JSON.parse(localStorage.getItem(CFG_KEY)||'{}')}catch(e){return{}} }
+function saveCfg(c)     { localStorage.setItem(CFG_KEY, JSON.stringify(c)) }
+
+// ── User management ──────────────────────────────────────────
+function getUsers()     { try{return JSON.parse(localStorage.getItem(USERS_KEY)||'[]')}catch(e){return[]} }
+function saveUsers(u)   { localStorage.setItem(USERS_KEY, JSON.stringify(u)) }
+
+function loginUser(username, password) {
+  const users = getUsers();
+  const user  = users.find(u => u.username === username && u.password === btoa(password) && u.active);
+  if (!user) return null;
+  const sess  = { userId:user.id, username:user.username, isAdmin:user.isAdmin, ts:Date.now() };
+  sessionStorage.setItem(SESS_KEY, JSON.stringify(sess));
+  return sess;
+}
+function getSession()   { try{return JSON.parse(sessionStorage.getItem(SESS_KEY)||'null')}catch(e){return null} }
+function logout()       { sessionStorage.removeItem(SESS_KEY); location.href='index.html'; }
+
+// ── DB helpers ────────────────────────────────────────────────
+function getDB()        { try{return JSON.parse(localStorage.getItem(DB_KEY)||'[]')}catch(e){return[]} }
+function saveDB(data)   { localStorage.setItem(DB_KEY, JSON.stringify(data)); syncToCloud(data); }
+
+// ── JSONBin sync ─────────────────────────────────────────────
+async function syncToCloud(data) {
+  const cfg = getCfg();
+  if (!cfg.jbinKey) return;
+  try {
+    if (!cfg.binId) {
+      const r = await fetch('https://api.jsonbin.io/v3/b', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','X-Master-Key':cfg.jbinKey,'X-Bin-Name':'PG Finder BLR'},
+        body:JSON.stringify({pgs:data})
+      });
+      const d = await r.json();
+      cfg.binId = d.metadata.id;
+      saveCfg(cfg);
+    } else {
+      await fetch(`https://api.jsonbin.io/v3/b/${cfg.binId}`, {
+        method:'PUT',
+        headers:{'Content-Type':'application/json','X-Master-Key':cfg.jbinKey},
+        body:JSON.stringify({pgs:data})
+      });
+    }
+  } catch(e) { console.warn('Cloud sync failed', e); }
+}
+
+async function loadFromCloud() {
+  const cfg = getCfg();
+  if (!cfg.jbinKey || !cfg.binId) return null;
+  try {
+    const r = await fetch(`https://api.jsonbin.io/v3/b/${cfg.binId}/latest`,
+      {headers:{'X-Master-Key':cfg.jbinKey}});
+    const d = await r.json();
+    const pgs = d.record.pgs || [];
+    localStorage.setItem(DB_KEY, JSON.stringify(pgs));
+    return pgs;
+  } catch(e) { return null; }
+}
+
+// ── Cloudinary upload ─────────────────────────────────────────
+async function uploadImage(file, onProgress) {
+  const cfg = getCfg();
+  if (!cfg.cldName || !cfg.preset) {
+    // base64 fallback
+    return new Promise(res => {
+      const r = new FileReader();
+      r.onload = e => res(e.target.result);
+      r.readAsDataURL(file);
+    });
+  }
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('upload_preset', cfg.preset);
+  fd.append('folder', 'pg_finder_blr');
+  const xhr = new XMLHttpRequest();
+  return new Promise((res, rej) => {
+    xhr.upload.onprogress = e => { if(onProgress && e.lengthComputable) onProgress(e.loaded/e.total); };
+    xhr.onload = () => {
+      try { const d = JSON.parse(xhr.responseText); res(d.secure_url||''); }
+      catch(e) { rej(e); }
+    };
+    xhr.onerror = () => rej(new Error('Upload failed'));
+    xhr.open('POST', `https://api.cloudinary.com/v1_1/${cfg.cldName}/image/upload`);
+    xhr.send(fd);
+  });
+}
+
+// ── Distance calculation ──────────────────────────────────────
+function haversineKm(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2-lat1)*Math.PI/180;
+  const dLon = (lon2-lon1)*Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.asin(Math.sqrt(a));
+}
+
+async function geocodeAddress(input) {
+  // Try to extract lat/lng from Google Maps links
+  const patterns = [
+    /[@/](-?\d+\.\d+),(-?\d+\.\d+)/,
+    /q=(-?\d+\.\d+),(-?\d+\.\d+)/,
+    /\?q=([^&]+)/
+  ];
+  for (const p of patterns) {
+    const m = input.match(p);
+    if (m && m[2]) return { lat: parseFloat(m[1]), lon: parseFloat(m[2]) };
+  }
+  // Nominatim geocode
+  try {
+    const q = encodeURIComponent(input.includes('Bengaluru')||input.includes('Bangalore') ? input : input+', Bengaluru');
+    const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`);
+    const d = await r.json();
+    if (d[0]) return { lat: parseFloat(d[0].lat), lon: parseFloat(d[0].lon) };
+  } catch(e) {}
+  return null;
+}
+
+async function getPGCoords(pg) {
+  if (pg._lat && pg._lon) return { lat:pg._lat, lon:pg._lon };
+  const loc = pg.mapLink || pg.addr;
+  if (!loc) return null;
+  const c = await geocodeAddress(loc);
+  if (c) { pg._lat = c.lat; pg._lon = c.lon; }
+  return c;
+}
+
+// ── Avg score ─────────────────────────────────────────────────
+function avgScore(pg) {
+  if (!pg.reviews || !pg.reviews.length) return 0;
+  const v = pg.reviews.filter(r => r.score > 0);
+  return v.length ? +(v.reduce((a,b) => a+b.score, 0)/v.length).toFixed(1) : 0;
+}
+
+// ── Score colour ──────────────────────────────────────────────
+function scoreColor(s) {
+  if (s >= 8)  return '#10b981';
+  if (s >= 6)  return '#f59e0b';
+  if (s > 0)   return '#ef4444';
+  return '#6b7280';
+}
+
+// ── Number format ─────────────────────────────────────────────
+function fmt(n) { return n ? Number(n).toLocaleString('en-IN') : '—'; }
+
+// ── Toast helper (expects a #toast element) ───────────────────
+function toast(msg, type='') {
+  let t = document.getElementById('toast');
+  if (!t) { t = document.createElement('div'); t.id='toast'; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.className = 'toast' + (type ? ' '+type : '');
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+// ── Seed on load ─────────────────────────────────────────────
+seedUsers();
+
+// ── Sample data seed ─────────────────────────────────────────
+function seedSampleData() {
+  if (localStorage.getItem(DB_KEY)) return;
+  const sample = [
+    {id:'pg1',name:'Sri Sai PG',gender:'Male',addr:'42, 5th Cross, Koramangala 4th Block, Bengaluru - 560034',
+     mapLink:'https://maps.google.com/?q=12.9352,77.6245',owner:'Ramesh Kumar',phone:'9876543210',email:'',
+     r1:9500,r2:7000,r3:5500,deposit:18000,maint:500,elec:'Per unit metered',food:'Separate — veg only',foodAmt:2500,wifi:'Included in rent',
+     laundry:true,hk:true,lift:true,parking:false,water:true,cctv:true,ac:false,gym:false,power:true,
+     reviews:[{text:'Clean rooms, friendly staff, good food',score:8},{text:'Well managed, responsive owner',score:7.5},{text:'Good location near metro',score:8}],
+     foodQ:'Tasty South Indian food, timely service. Breakfast and dinner included.',clean:'Well maintained bathrooms, rooms cleaned daily.',
+     imgs:{amenity:[],food:[],infra:[]},added:'2025-01-15',updated:'2025-06-01'},
+    {id:'pg2',name:'Green Valley PG',gender:'Female',addr:'18, 2nd Main, HSR Layout Sector 2, Bengaluru - 560102',
+     mapLink:'https://maps.google.com/?q=12.9116,77.6389',owner:'Priya Sharma',phone:'8765432109',email:'priya@greenvalley.in',
+     r1:12000,r2:8500,r3:0,deposit:20000,maint:0,elec:'Included in rent',food:'Included in rent',foodAmt:0,wifi:'Included in rent',
+     laundry:true,hk:true,lift:true,parking:true,water:true,cctv:true,ac:true,gym:true,power:true,
+     reviews:[{text:'Safe and clean, great warden',score:9},{text:'Best PG in HSR, highly recommend',score:9},{text:'Food variety is excellent',score:8},{text:'WiFi is fast and reliable',score:8.5},{text:'Security is top notch',score:9}],
+     foodQ:'Variety of dishes, breakfast & dinner. Separate veg and non-veg.',clean:'Spotless common areas, housekeeping daily.',
+     imgs:{amenity:[],food:[],infra:[]},added:'2025-02-10',updated:'2025-05-28'},
+    {id:'pg3',name:'Comfort Stay PG',gender:'Co-ed',addr:'99, 1st Floor, Indiranagar 100 Feet Road, Bengaluru - 560038',
+     mapLink:'https://maps.google.com/?q=12.9784,77.6408',owner:'Suresh Nair',phone:'7654321098',email:'',
+     r1:11000,r2:8000,r3:6000,deposit:15000,maint:300,elec:'Fixed monthly',food:'Not provided',foodAmt:0,wifi:'Separate charge',
+     laundry:false,hk:false,lift:false,parking:true,water:true,cctv:true,ac:false,gym:false,power:false,
+     reviews:[{text:'Okay locality, parking available',score:6},{text:'Rooms are decent but maintenance slow',score:6.5}],
+     foodQ:'No food — nearby restaurants available.',clean:'Rooms need better cleaning. Common areas okay.',
+     imgs:{amenity:[],food:[],infra:[]},added:'2025-03-05',updated:'2025-06-01'},
+  ];
+  localStorage.setItem(DB_KEY, JSON.stringify(sample));
+}
+seedSampleData();
+
+</script>
 <script>
 // ── State ─────────────────────────────────────────────────────
 let DB = [], sess = null, editId = null, revCount = 0;
