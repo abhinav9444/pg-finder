@@ -234,7 +234,11 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:14px;color:var(--gray-7)
     </div>
     <button class="btn btn-green" style="width:100%;justify-content:center" onclick="doLogin()">Sign In →</button>
     <div style="margin-top:16px;text-align:center"><a href="view.html" style="font-size:12px;color:var(--gray-6)">← Back to Browse</a></div>
-   
+    <div style="margin-top:20px;background:var(--gray-1);border-radius:10px;padding:12px;font-size:11px;color:var(--gray-6)">
+      <strong>Demo credentials</strong><br>
+      Admin: <code>admin</code> / <code>Admin@123</code><br>
+      User: <code>ravi</code> / <code>Ravi@123</code>
+    </div>
   </div>
 </div>
 
@@ -584,14 +588,16 @@ async function loadUsersFromCloud() {
       {headers:{'X-Master-Key':cfg.jbinKey}});
     if (!r.ok) return null;
     const d = await r.json();
-    let users = d.record?.users;
-    // If bin is empty/missing, seed defaults and push to cloud
-    if (!users || !users.length) {
-      users = DEFAULT_USERS;
-      await syncUsers(users);
+    const users = d.record?.users;
+    // Only trust cloud if it has data — never overwrite with defaults
+    if (users && users.length) {
+      localStorage.setItem(USERS_KEY, JSON.stringify(users));
+      return users;
     }
-    localStorage.setItem(USERS_KEY, JSON.stringify(users));
-    return users;
+    // Bin is genuinely empty — push current local/default users to initialise it ONCE
+    const toSeed = getUsers();
+    await syncUsers(toSeed);
+    return toSeed;
   } catch(e) { return null; }
 }
 
