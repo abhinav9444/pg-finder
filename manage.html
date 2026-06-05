@@ -559,9 +559,9 @@ function getUsers() {
   try { return JSON.parse(localStorage.getItem(USERS_KEY)||'null') || DEFAULT_USERS; }
   catch(e) { return DEFAULT_USERS; }
 }
-function saveUsers(u) {
+async function saveUsers(u) {
   localStorage.setItem(USERS_KEY, JSON.stringify(u));
-  syncUsers(u);
+  await syncUsers(u);
 }
 
 async function syncUsers(users) {
@@ -585,15 +585,15 @@ async function loadUsersFromCloud() {
     if (!r.ok) return null;
     const d = await r.json();
     const users = d.record?.users;
-    // Only trust cloud if it has data — never overwrite with defaults
+    // Cloud is authoritative — always use it if it returned anything
     if (users && users.length) {
       localStorage.setItem(USERS_KEY, JSON.stringify(users));
       return users;
     }
-    // Bin is genuinely empty — push current local/default users to initialise it ONCE
-    const toSeed = getUsers();
-    await syncUsers(toSeed);
-    return toSeed;
+    // Bin empty — seed with DEFAULT_USERS only (not localStorage which may be stale)
+    await syncUsers(DEFAULT_USERS);
+    localStorage.setItem(USERS_KEY, JSON.stringify(DEFAULT_USERS));
+    return DEFAULT_USERS;
   } catch(e) { return null; }
 }
 
@@ -1087,20 +1087,20 @@ function renderUserTable() {
     </tbody>`;
 }
 
-function toggleUser(id) {
+async function toggleUser(id) {
   const users = getUsers();
   const u = users.find(x=>x.id===id); if (!u) return;
   u.active = !u.active;
-  saveUsers(users);
+  await saveUsers(users);
   renderUserTable();
   toast(u.username + (u.active?' activated':' paused'));
 }
 
-function deleteUser(id) {
+async function deleteUser(id) {
   const users = getUsers();
   const u = users.find(x=>x.id===id);
   if (!confirm(`Delete user "${u?.username}"? This cannot be undone.`)) return;
-  saveUsers(users.filter(x=>x.id!==id));
+  await saveUsers(users.filter(x=>x.id!==id));
   renderUserTable();
   toast('User deleted');
 }
@@ -1125,7 +1125,7 @@ function openEditUserModal(id) {
   document.getElementById('modal-user').style.display = 'flex';
 }
 
-function saveUser() {
+async function saveUser() {
   const id   = document.getElementById('mu-id').value;
   const user = document.getElementById('mu-user').value.trim();
   const pass = document.getElementById('mu-pass').value;
@@ -1145,7 +1145,7 @@ function saveUser() {
     if (!pass) { err.textContent='Password required for new user'; err.style.display='block'; return; }
     users.push({ id:'u_'+Date.now(), username:user, password:btoa(pass), isAdmin:false, active:true, created:new Date().toISOString().slice(0,10) });
   }
-  saveUsers(users);
+  await saveUsers(users);
   closeModal('modal-user');
   renderUserTable();
   toast(id ? 'User updated' : 'User created: ' + user, 'ok');
@@ -1185,7 +1185,7 @@ function saveCldCfg() {
   saveCfg(cfg);
   toast('Cloudinary config saved', 'ok');
 }
-function changePassword() {
+async function changePassword() {
   const old  = document.getElementById('pw-old').value;
   const nw   = document.getElementById('pw-new').value;
   const conf = document.getElementById('pw-conf').value;
@@ -1195,7 +1195,7 @@ function changePassword() {
   if (nw.length < 6) { toast('New password must be at least 6 characters','err'); return; }
   if (nw !== conf)   { toast('Passwords do not match','err'); return; }
   u.password = btoa(nw);
-  saveUsers(users);
+  await saveUsers(users);
   ['pw-old','pw-new','pw-conf'].forEach(id=>document.getElementById(id).value='');
   toast('Password changed successfully', 'ok');
 }
